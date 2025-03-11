@@ -80,7 +80,7 @@ with ConfigRegistry.register_config("basic") as c:
     c.tankDesign = tankDesign
     c.magnetDesign = magnet_design
 # cave parameters
-    c.cave = AttrDict()
+    c.cave = AttrDict(z=0*u.cm)
     c.cave.floorHeightMuonShield = 5*u.m
     c.cave.floorHeightTankA = 4.2*u.m
     if strawDesign == 10:
