@@ -237,6 +237,7 @@ def configure(run, ship_geo):
         MuonShield = ROOT.ShipMuonShield(
             in_params,
             ship_geo.cave.floorHeightMuonShield,
+            ship_geo.muShield.z,
             ship_geo.muShieldWithCobaltMagnet,
             ship_geo.muShieldStepGeo,
             ship_geo.hadronAbsorber.WithConstField,
