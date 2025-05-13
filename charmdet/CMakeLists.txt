@@ -9,7 +9,6 @@ set(INCLUDE_DIRECTORIES
     ${CMAKE_SOURCE_DIR}/online
     ${CMAKE_SOURCE_DIR}/genfit/core/include
     ${CMAKE_SOURCE_DIR}/genfit/trackReps/include
-    ${CMAKE_SOURCE_DIR}/millepede
     ${ROOT_INCLUDE_DIR})
 
 include_directories(${INCLUDE_DIRECTORIES} ${VMC_INCLUDE_DIRS}
@@ -38,9 +37,7 @@ set(SRCS
     Scintillator.cxx
     ScintillatorPoint.cxx
     ReProcessAbsorber.cxx
-    RPCTrack.cxx
-    MufluxReco.cxx
-    MillepedeCaller.cxx)
+    RPCTrack.cxx)
 
 set(HEADERS)
 set(LINKDEF BoxLinkDef.h)
@@ -53,7 +50,6 @@ set(DEPENDENCIES
     Geom
     Core
     genfit
-    millepede
     FairLogger::FairLogger)
 
 generate_library()
