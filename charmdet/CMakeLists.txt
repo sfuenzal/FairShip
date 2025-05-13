@@ -6,14 +6,14 @@ set(INCLUDE_DIRECTORIES
     ${BASE_INCLUDE_DIRECTORIES}
     ${CMAKE_SOURCE_DIR}/shipdata
     ${CMAKE_SOURCE_DIR}/charmdet
-    ${ROOT_INCLUDE_DIR})
+    ${genfit2_INCDIR}
 
 include_directories(${INCLUDE_DIRECTORIES} ${VMC_INCLUDE_DIRS}
                     ${FAIRROOT_INCLUDE_DIR})
 include_directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
 
 set(LINK_DIRECTORIES ${ROOT_LIBRARY_DIR} ${FAIRROOT_LIBRARY_DIR}
-                     ${GENFIT_LIBRARY_DIR})
+                     ${genfit2_LIBDIR})
 
 link_directories(${LINK_DIRECTORIES})
 
@@ -44,7 +44,7 @@ set(DEPENDENCIES
     ParBase
     Geom
     Core
-    genfit
+    genfit2
     FairLogger::FairLogger)
 
 generate_library()
