@@ -30,18 +30,13 @@ set(SRCS
     PixelModules.cxx
     PixelModulesPoint.cxx
     MufluxSpectrometer.cxx
-    MufluxSpectrometerHit.cxx
     MufluxSpectrometerPoint.cxx
     SciFi.cxx
     SciFiPoint.cxx
-    SciFiHit.cxx
     MuonTagger.cxx
     MuonTaggerPoint.cxx
-    MuonTaggerHit.cxx
     Scintillator.cxx
     ScintillatorPoint.cxx
-    ScintillatorHit.cxx
-    ShipPixelHit.cxx
     ReProcessAbsorber.cxx
     RPCTrack.cxx
     MufluxReco.cxx
