@@ -6,7 +6,7 @@ set(INCLUDE_DIRECTORIES
     ${BASE_INCLUDE_DIRECTORIES}
     ${CMAKE_SOURCE_DIR}/shipdata
     ${CMAKE_SOURCE_DIR}/charmdet
-    ${genfit2_INCDIR}
+    ${genfit2_INCDIR})
 
 include_directories(${INCLUDE_DIRECTORIES} ${VMC_INCLUDE_DIRS}
                     ${FAIRROOT_INCLUDE_DIR})
