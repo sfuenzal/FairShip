@@ -6,9 +6,6 @@ set(INCLUDE_DIRECTORIES
     ${BASE_INCLUDE_DIRECTORIES}
     ${CMAKE_SOURCE_DIR}/shipdata
     ${CMAKE_SOURCE_DIR}/charmdet
-    ${CMAKE_SOURCE_DIR}/online
-    ${CMAKE_SOURCE_DIR}/genfit/core/include
-    ${CMAKE_SOURCE_DIR}/genfit/trackReps/include
     ${ROOT_INCLUDE_DIR})
 
 include_directories(${INCLUDE_DIRECTORIES} ${VMC_INCLUDE_DIRS}
@@ -35,9 +32,7 @@ set(SRCS
     MuonTagger.cxx
     MuonTaggerPoint.cxx
     Scintillator.cxx
-    ScintillatorPoint.cxx
-    ReProcessAbsorber.cxx
-    RPCTrack.cxx)
+    ScintillatorPoint.cxx)
 
 set(HEADERS)
 set(LINKDEF BoxLinkDef.h)
