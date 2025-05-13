@@ -1,4 +1,3 @@
-from builtins import range
 import ROOT,os
 #ROOT.gROOT.ProcessLine('typedef std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<MufluxSpectrometerHit*>>>> nestedList;')
 import numpy

@@ -1924,7 +1924,7 @@ def fitTrack(hitlist,Pstart=3.):
    k=0
    for nhit in hitlist:
       numHit = 0
-      if type(nhit)==type(1):
+      if type(nhit)==int:
           hit = sTree.Digi_MufluxSpectrometerHits[nhit]
           numHit = nhit
       else: hit = nhit
@@ -2087,7 +2087,7 @@ def testPR(onlyHits=False):
    for aHit in  track_hits[nTrack][dets]:
     hitlist[k].append( aHit['digiHit'])
   aTrack = fitTrack(hitlist[k],abs(track_hits[nTrack]['p']))
-  if type(aTrack) != type(1):
+  if type(aTrack) != int:
    trackCandidates.append(aTrack)
    k+=1
  if onlyHits: return hitlist
@@ -2439,7 +2439,7 @@ def findTracks(PR = 1,linearTrackModel = False,withCloneKiller=True):
           if Debug:  print("fit track t1t2 %i t3t4 %i stereo %i,%i, with hits %i,  delx %6.3F, pstart %6.3F"%(nt1t2,nt3t4,nu,nv,len(hitList),delx,momFromptkick))
           aTrack = fitTrack(hitList,momFromptkick)
           if Debug:  print("result of trackFit",aTrack)
-          if type(aTrack) != type(1):
+          if type(aTrack) != int:
 # check if track is still in acceptance:
             rc,pos,mom = extrapolateToPlane(aTrack,T3z)
             reject = False
@@ -3806,7 +3806,7 @@ def plotRPCExtrap(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False):
    fun = h['Eff'+hname].GetListOfFunctions()[0]
    eff = fun.GetParameter(0)
    err = fun.GetParError(0)
-   h['txtEff'+hname] = ROOT.TMathText(25,0.92,'eff = (%5.2F\pm%5.2F)%s'%(eff*100,err*100,'\\hbox{%}'))
+   h['txtEff'+hname] = ROOT.TMathText(25,0.92,r'eff = (%5.2F\pm%5.2F)%s'%(eff*100,err*100,'\\hbox{%}'))
    h['txtEff'+hname].SetTextSize(0.1)
    h['txtEff'+hname].Draw()
  print("do not forget there were runs without one RPC station")
@@ -3987,7 +3987,7 @@ def loopTracks(r,w):
      rc=sTree.GetEvent(Nr)
      hitlist = listOfTracks[Nr]
      aTrack = fitTrack(hitlist,1.)
-     if type(aTrack) != type(1):
+     if type(aTrack) != int:
       fitStatus = aTrack.getFitStatus()
       chisq+=fitStatus.getChi2()/fitStatus.getNdf()
      else: chisq+=10
@@ -4007,7 +4007,7 @@ def FCN(npar, gin, f, par, iflag):
    if pid == 0:
       chisq = loopTracks(r,w)
    else:
-    print("In the parent process after forking the child {}".format(pid))
+    print(f"In the parent process after forking the child {pid}")
     finished = os.waitpid(0, 0)
     print(finished)
     os.close(w)
@@ -4055,7 +4055,7 @@ def debugGeometrie():
  print(vtop[1],vbot[1])
  test = ROOT.MufluxSpectrometerHit(11002012,0)
  test.MufluxSpectrometerEndPoints(vbot,vtop)
- m = (vtop[1]-vbot[1])/((vtop[0]-vbot[0]))
+ m = (vtop[1]-vbot[1])/(vtop[0]-vbot[0])
  b = vtop[1] - m*vtop[0]
  start = -b/m
  print(vtop[1],vbot[1])
