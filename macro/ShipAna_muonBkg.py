@@ -84,13 +84,16 @@ log={}
 h = {}
 
 ut.bookHist(h,'Digi_SBTHits_YvsX', 'Y vs X SBT Hits', 400, -400., 400., 400, -400., 400.)
-ut.bookHist(h,'Digi_SBTHits_Z', 'Z SBT Hits', 400, -3000., 3000)
+ut.bookHist(h,'Digi_SBTHits_Z', 'Z SBT Hits', 400, -3000., 3000.)
+ut.bookHist(h,'digiSBT2MC', 'Digi SBT to MC', 400, 0., 4000.)
 
 def makePlots():
   ut.bookCanvas(h, key='Digi_SBTHits_YvsX_canvas', title='Digi SBT Y vs X hit map', nx=800, ny=600, cx=1, cy=1)
   h['Digi_SBTHits_YvsX'].Draw('colz')
-  ut.bookCanvas(h, key='Digi_SBTHits_YvsX_canvas', title='Digi SBT Z hit map', nx=800, ny=600, cx=1, cy=1)
+  ut.bookCanvas(h, key='Digi_SBTHits_Z_canvas', title='Digi SBT Z hit map', nx=800, ny=600, cx=1, cy=1)
   h['Digi_SBTHits_Z'].Draw()
+  ut.bookCanvas(h, key='digiSBT2MC_canvas', title='Digi SBT to MC', nx=800, ny=600, cx=1, cy=1)
+  h['digiSBT2MC'].Draw()
   
   print('finished making plots')
 
@@ -105,7 +108,11 @@ def myEventLoop(n):
 
     h['Digi_SBTHits_YvsX'].Fill(X_SBTHits, Y_SBTHits)
     h['Digi_SBTHits_Z'].Fill(Z_SBTHits)
-  
+
+  for digiSBT2MC_it in sTree.digiSBT2MC:
+    for digiSBT2MC_it_it in digiSBT2MC_it:
+      h['digiSBT2MC'].Fill(digiSBT2MC_it_it)
+    
 sTree.GetEvent(0)
 options.nEvents = min(sTree.GetEntries(),options.nEvents)
 
