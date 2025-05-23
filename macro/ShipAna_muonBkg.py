@@ -40,7 +40,38 @@ if not options.geoFile:
  options.geoFile = options.inputFile.replace('ship.','geofile_full.').replace('_rec.','.')
 else:
   fgeo = ROOT.TFile(options.geoFile)
+  
+def myVertex(t1,t2,PosDir):
+  # closest distance between two tracks
+  # d = |pq . u x v|/|u x v|
+  a = ROOT.TVector3(PosDir[t1][0](0), PosDir[t1][0](1), PosDir[t1][0](2))
+  u = ROOT.TVector3(PosDir[t1][1](0), PosDir[t1][1](1), PosDir[t1][1](2))
+  c = ROOT.TVector3(PosDir[t2][0](0), PosDir[t2][0](1), PosDir[t2][0](2))
+  v = ROOT.TVector3(PosDir[t2][1](0), PosDir[t2][1](1), PosDir[t2][1](2))
+  pq = a - c
+  uCrossv = u.Cross(v)
+  dist  = pq.Dot(uCrossv)/(uCrossv.Mag()+1E-8)
+  # u.a - u.c + s*|u|**2 - u.v*t = 0
+  # v.a - v.c + s*v.u - t*|v|**2 = 0
+  E = u.Dot(a) - u.Dot(c)
+  F = v.Dot(a) - v.Dot(c)
+  A, B = u.Mag2(), -u.Dot(v)
+  C, D = u.Dot(v), -v.Mag2()
+  t = -(C*E-A*F)/(B*C-A*D)
+  X = c.x()+v.x()*t
+  Y = c.y()+v.y()*t
+  Z = c.z()+v.z()*t
 
+  return X, Y, Z, abs(dist)
+
+def RedoVertexing(t1, t2):
+  PosDir = {}
+  for tr in [t1, t2]:
+    xx  = sTree.FitTracks[tr].getFittedState()
+    PosDir[tr] = [xx.getPos(), xx.getDir()]
+  xv, yv, zv, doca = myVertex(t1, t2, PosDir)
+  print(xv, yv, zv, doca)
+  
 # new geofile, load Shipgeo dictionary written by run_simScript.py
 #upkl    = Unpickler(fgeo)
 #ShipGeo = upkl.load('ShipGeo')
@@ -127,6 +158,14 @@ ut.bookHist(h,'MCTrack_fPt', 'MC tracks Pt', 400, 0, 0.01)
 ut.bookHist(h,'MCTrack_fM', 'MC tracks M', 400, 0, 20)
 ut.bookHist(h,'MCTrack_fPdgCode', 'MC tracks PDG code', 400, 0, 20)
 
+ut.bookHist(h,'UBT_Y_versus_X_photon_hits', 'UBT Y versus X photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_Z_versus_X_photon_hits', 'UBT Z versus X photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_Z_versus_Y_photon_hits', 'UBT Z versus Y photon hits', 400, -1000, 1000, 400, 1000, 1000)
+
+ut.bookHist(h,'SBT_Y_versus_X_photon_hits', 'SBT Y versus X photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'SBT_Z_versus_X_photon_hits', 'SBT Z versus X photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'SBT_Z_versus_Y_photon_hits', 'SBT Z versus Y photon hits', 400, -1000, 1000, 400, 1000, 1000)
+
 def makePlots():
   ut.bookCanvas(h, key='Digi_SBTHits_YvsX_canvas', title='Digi SBT Y vs X hit map', nx=800, ny=600, cx=1, cy=1)
   h['Digi_SBTHits_YvsX'].Draw('colz')
@@ -210,14 +249,44 @@ def makePlots():
   ut.bookCanvas(h, key='MCTrack_fPdgCode_canvas', title='MC tracks PDG code', nx=800, ny=600, cx=1, cy=1)
   h['MCTrack_fPdgCode'].Draw()
 
+  ut.bookCanvas(h, key='UBT_Y_versus_X_photon_hits', title='UBT Y versus X photon hits', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_Y_versus_X_photon_hits'].Draw()
+  ut.bookCanvas(h, key='UBT_Z_versus_X_photon_hits', title='UBT Z versus X photon hits', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_Y_versus_X_photon_hits'].Draw()
+  ut.bookCanvas(h, key='UBT_Z_versus_Y_photon_hits', title='UBT Z versus Y photon hits', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_Y_versus_X_photon_hits'].Draw()
+  
+  ut.bookCanvas(h, key='SBT_Y_versus_X_photon_hits', title='SBT Y versus X photon hits', nx=800, ny=600, cx=1, cy=1)
+  h['SBT_Y_versus_X_photon_hits'].Draw()
+  ut.bookCanvas(h, key='SBT_Z_versus_X_photon_hits', title='SBT Z versus X photon hits', nx=800, ny=600, cx=1, cy=1)
+  h['SBT_Y_versus_X_photon_hits'].Draw()
+  ut.bookCanvas(h, key='SBT_Z_versus_Y_photon_hits', title='SBT Z versus Y photon hits', nx=800, ny=600, cx=1, cy=1)
+  h['SBT_Y_versus_X_photon_hits'].Draw()
   
   print('finished making plots')
 
-# start event loop
-def myEventLoop(n):
-  rc = sTree.GetEntry(n)
-  sTree.GetEntry(n)
+# EM Debris: How many photons cross UBT (UpstreamTaggerPoint) and SBT (vetoPoint)
+def EM_debris_UBT_SBT():
+  photons_in_UBT = 0
+  for UpstreamTaggerPoint_it in sTree.UpstreamTaggerPoint:
+    UpstreamTaggerPoint_fPdgCode = UpstreamTaggerPoint_it.PdgCode()
+    if UpstreamTaggerPoint_fPdgCode != 22: continue
+    photons_in_UBT += 1
+    h['UBT_Y_versus_X_photon_hits'].Fill(UpstreamTaggerPoint_it.GetX(), UpstreamTaggerPoint_it.GetY())
+    h['UBT_Z_versus_X_photon_hits'].Fill(UpstreamTaggerPoint_it.GetX(), UpstreamTaggerPoint_it.GetZ())
+    h['UBT_Z_versus_Y_photon_hits'].Fill(UpstreamTaggerPoint_it.GetY(), UpstreamTaggerPoint_it.GetZ())
     
+  photons_in_SBT = 0
+  for vetoPoint_it in sTree.vetoPoint:
+    vetoPoint_fPdgCode = vetoPoint_it.PdgCode()
+    if vetoPoint_fPdgCode != 22: continue
+    photons_in_SBT += 1
+    h['SBT_Y_versus_X_photon_hits'].Fill(vetoPoint_it.GetX(), vetoPoint_it.GetY())
+    h['SBT_Z_versus_X_photon_hits'].Fill(vetoPoint_it.GetX(), vetoPoint_it.GetZ())
+    h['SBT_Z_versus_Y_photon_hits'].Fill(vetoPoint_it.GetY(), vetoPoint_it.GetZ())
+
+# Fill digi SBT Hits plots
+def fill_digi_SBT_Hits_plots():
   for Digi_SBTHits_it in sTree.Digi_SBTHits:
     X_Digi_SBTHits = Digi_SBTHits_it.GetXYZ().X()
     Y_Digi_SBTHits = Digi_SBTHits_it.GetXYZ().Y()
@@ -230,28 +299,32 @@ def myEventLoop(n):
     for digiSBT2MC_it_it in digiSBT2MC_it:
       h['digiSBT2MC'].Fill(digiSBT2MC_it_it)
 
-  for UpstreamTaggerPoint_it in sTree.UpstreamTaggerPoint:
-    UpstreamTaggerPoint_trackID = UpstreamTaggerPoint_it.GetTrackID()
-    UpstreamTaggerPoint_fX = UpstreamTaggerPoint_it.GetX()
-    UpstreamTaggerPoint_fY = UpstreamTaggerPoint_it.GetY()
-    UpstreamTaggerPoint_fZ = UpstreamTaggerPoint_it.GetZ()
-    UpstreamTaggerPoint_fPx = UpstreamTaggerPoint_it.GetPx()
-    UpstreamTaggerPoint_fPy = UpstreamTaggerPoint_it.GetPy()
-    UpstreamTaggerPoint_fPz = UpstreamTaggerPoint_it.GetPz()
-    UpstreamTaggerPoint_fPt = ROOT.TMath.Sqrt(UpstreamTaggerPoint_fPx**2 + UpstreamTaggerPoint_fPy**2)
-    UpstreamTaggerPoint_fTime = UpstreamTaggerPoint_it.GetTime()
-    UpstreamTaggerPoint_fEloss = UpstreamTaggerPoint_it.GetEnergyLoss()
-    UpstreamTaggerPoint_fPdgCode = UpstreamTaggerPoint_it.PdgCode()
-    h['UpstreamTaggerPoint_trackID'].Fill(UpstreamTaggerPoint_trackID)
-    h['UpstreamTaggerPoint_fY_versus_fX'].Fill(UpstreamTaggerPoint_fX, UpstreamTaggerPoint_fY)
-    h['UpstreamTaggerPoint_fZ'].Fill(UpstreamTaggerPoint_fZ)
-    h['UpstreamTaggerPoint_fPy_versus_fPx'].Fill(UpstreamTaggerPoint_fPx, UpstreamTaggerPoint_fPy)
-    h['UpstreamTaggerPoint_fPz'].Fill(UpstreamTaggerPoint_fPz)
-    h['UpstreamTaggerPoint_fPt'].Fill(UpstreamTaggerPoint_fPt)
-    h['UpstreamTaggerPoint_fTime'].Fill(UpstreamTaggerPoint_fTime)
-    h['UpstreamTaggerPoint_fEloss'].Fill(UpstreamTaggerPoint_fEloss)
-    h['UpstreamTaggerPoint_fPdgCode'].Fill(UpstreamTaggerPoint_fPdgCode)
-    
+# Fill UpstreamTaggerPoint (UBT) plots
+def fill_UpstreamTaggerPoint_plots():
+    for UpstreamTaggerPoint_it in sTree.UpstreamTaggerPoint:
+      UpstreamTaggerPoint_trackID = UpstreamTaggerPoint_it.GetTrackID()
+      UpstreamTaggerPoint_fX = UpstreamTaggerPoint_it.GetX()
+      UpstreamTaggerPoint_fY = UpstreamTaggerPoint_it.GetY()
+      UpstreamTaggerPoint_fZ = UpstreamTaggerPoint_it.GetZ()
+      UpstreamTaggerPoint_fPx = UpstreamTaggerPoint_it.GetPx()
+      UpstreamTaggerPoint_fPy = UpstreamTaggerPoint_it.GetPy()
+      UpstreamTaggerPoint_fPz = UpstreamTaggerPoint_it.GetPz()
+      UpstreamTaggerPoint_fPt = ROOT.TMath.Sqrt(UpstreamTaggerPoint_fPx**2 + UpstreamTaggerPoint_fPy**2)
+      UpstreamTaggerPoint_fTime = UpstreamTaggerPoint_it.GetTime()
+      UpstreamTaggerPoint_fEloss = UpstreamTaggerPoint_it.GetEnergyLoss()
+      UpstreamTaggerPoint_fPdgCode = UpstreamTaggerPoint_it.PdgCode()
+      h['UpstreamTaggerPoint_trackID'].Fill(UpstreamTaggerPoint_trackID)
+      h['UpstreamTaggerPoint_fY_versus_fX'].Fill(UpstreamTaggerPoint_fX, UpstreamTaggerPoint_fY)
+      h['UpstreamTaggerPoint_fZ'].Fill(UpstreamTaggerPoint_fZ)
+      h['UpstreamTaggerPoint_fPy_versus_fPx'].Fill(UpstreamTaggerPoint_fPx, UpstreamTaggerPoint_fPy)
+      h['UpstreamTaggerPoint_fPz'].Fill(UpstreamTaggerPoint_fPz)
+      h['UpstreamTaggerPoint_fPt'].Fill(UpstreamTaggerPoint_fPt)
+      h['UpstreamTaggerPoint_fTime'].Fill(UpstreamTaggerPoint_fTime)
+      h['UpstreamTaggerPoint_fEloss'].Fill(UpstreamTaggerPoint_fEloss)
+      h['UpstreamTaggerPoint_fPdgCode'].Fill(UpstreamTaggerPoint_fPdgCode)
+
+# Fill vetoPoint (SBT) plots
+def fill_vetoPoint_plots():
   for vetoPoint_it in sTree.vetoPoint:
     vetoPoint_trackID = vetoPoint_it.GetTrackID()
     vetoPoint_fX = vetoPoint_it.GetX()
@@ -274,28 +347,32 @@ def myEventLoop(n):
     h['vetoPoint_fEloss'].Fill(vetoPoint_fEloss)
     h['vetoPoint_fPdgCode'].Fill(vetoPoint_fPdgCode)
 
-  for strawtubesPoint_it in sTree.strawtubesPoint:
-    strawtubesPoint_trackID = strawtubesPoint_it.GetTrackID()
-    strawtubesPoint_fX = strawtubesPoint_it.GetX()
-    strawtubesPoint_fY = strawtubesPoint_it.GetY()
-    strawtubesPoint_fZ = strawtubesPoint_it.GetZ()
-    strawtubesPoint_fPx = strawtubesPoint_it.GetPx()
-    strawtubesPoint_fPy = strawtubesPoint_it.GetPy()
-    strawtubesPoint_fPz = strawtubesPoint_it.GetPz()
-    strawtubesPoint_fPt = ROOT.TMath.Sqrt(strawtubesPoint_fPx**2 + strawtubesPoint_fPy**2)
-    strawtubesPoint_fTime = strawtubesPoint_it.GetTime()
-    strawtubesPoint_fEloss = strawtubesPoint_it.GetEnergyLoss()
-    strawtubesPoint_fPdgCode = strawtubesPoint_it.PdgCode()
-    h['strawtubesPoint_trackID'].Fill(strawtubesPoint_trackID)
-    h['strawtubesPoint_fY_versus_fX'].Fill(strawtubesPoint_fX, strawtubesPoint_fY)
-    h['strawtubesPoint_fZ'].Fill(strawtubesPoint_fZ)
-    h['strawtubesPoint_fPy_versus_fPx'].Fill(strawtubesPoint_fPx, strawtubesPoint_fPy)
-    h['strawtubesPoint_fPz'].Fill(strawtubesPoint_fPz)
-    h['strawtubesPoint_fPt'].Fill(strawtubesPoint_fPt)
-    h['strawtubesPoint_fTime'].Fill(strawtubesPoint_fTime)
-    h['strawtubesPoint_fEloss'].Fill(strawtubesPoint_fEloss)
-    h['strawtubesPoint_fPdgCode'].Fill(strawtubesPoint_fPdgCode)
+# Fill strawtubesPoint (SST) plots
+def fill_strawtubesPoint_plots():
+    for strawtubesPoint_it in sTree.strawtubesPoint:
+      strawtubesPoint_trackID = strawtubesPoint_it.GetTrackID()
+      strawtubesPoint_fX = strawtubesPoint_it.GetX()
+      strawtubesPoint_fY = strawtubesPoint_it.GetY()
+      strawtubesPoint_fZ = strawtubesPoint_it.GetZ()
+      strawtubesPoint_fPx = strawtubesPoint_it.GetPx()
+      strawtubesPoint_fPy = strawtubesPoint_it.GetPy()
+      strawtubesPoint_fPz = strawtubesPoint_it.GetPz()
+      strawtubesPoint_fPt = ROOT.TMath.Sqrt(strawtubesPoint_fPx**2 + strawtubesPoint_fPy**2)
+      strawtubesPoint_fTime = strawtubesPoint_it.GetTime()
+      strawtubesPoint_fEloss = strawtubesPoint_it.GetEnergyLoss()
+      strawtubesPoint_fPdgCode = strawtubesPoint_it.PdgCode()
+      h['strawtubesPoint_trackID'].Fill(strawtubesPoint_trackID)
+      h['strawtubesPoint_fY_versus_fX'].Fill(strawtubesPoint_fX, strawtubesPoint_fY)
+      h['strawtubesPoint_fZ'].Fill(strawtubesPoint_fZ)
+      h['strawtubesPoint_fPy_versus_fPx'].Fill(strawtubesPoint_fPx, strawtubesPoint_fPy)
+      h['strawtubesPoint_fPz'].Fill(strawtubesPoint_fPz)
+      h['strawtubesPoint_fPt'].Fill(strawtubesPoint_fPt)
+      h['strawtubesPoint_fTime'].Fill(strawtubesPoint_fTime)
+      h['strawtubesPoint_fEloss'].Fill(strawtubesPoint_fEloss)
+      h['strawtubesPoint_fPdgCode'].Fill(strawtubesPoint_fPdgCode)
 
+# Fill MCtrack plots
+def fill_MCtrack_plots():
   for MCTrack_it in sTree.MCTrack:
     MCTrack_MotherId = MCTrack_it.GetMotherId()
     MCTrack_fStartX = MCTrack_it.GetStartX()
@@ -316,12 +393,25 @@ def myEventLoop(n):
     h['MCTrack_fM'].Fill(MCTrack_fM)
     h['MCTrack_fPdgCode'].Fill(MCTrack_fPdgCode)
     
+# start event loop
+def myEventLoop(n):
+  rc = sTree.GetEntry(n)
+  sTree.GetEntry(n)
+
+  fill_digi_SBT_Hits_plots()
+  fill_UpstreamTaggerPoint_plots()
+  fill_vetoPoint_plots()
+  fill_strawtubesPoint_plots()
+  fill_MCtrack_plots()
+  EM_debris_UBT_SBT()
+  
 sTree.GetEvent(0)
 options.nEvents = min(sTree.GetEntries(),options.nEvents)
 
 for n in range(options.nEvents):
   myEventLoop(n)
   sTree.FitTracks.Delete()
+
 makePlots()
 # output histograms
 hfile = options.inputFile.split(',')[0].replace('_rec','_ana')
