@@ -12,10 +12,10 @@ import shipRoot_conf
 from argparse import ArgumentParser
 
 shipRoot_conf.configure()
-#PDG = ROOT.TDatabasePDG.Instance()
+PDG = ROOT.TDatabasePDG.Instance()
 
 #chi2CutOff  = 4.
-#fiducialCut = False
+fiducialCut = False
 #measCutFK = 25
 #measCutPR = 22
 #docaCut = 2.
@@ -37,46 +37,14 @@ else:
   sTree = f.Get("cbmsim")
 
 if not options.geoFile:
- options.geoFile = options.inputFile.replace('ship.','geofile_full.').replace('_rec.','.')
+  options.geoFile = options.inputFile.replace('ship.','geofile_full.').replace('_rec.','.')
 else:
   fgeo = ROOT.TFile(options.geoFile)
   
-def myVertex(t1,t2,PosDir):
-  # closest distance between two tracks
-  # d = |pq . u x v|/|u x v|
-  a = ROOT.TVector3(PosDir[t1][0](0), PosDir[t1][0](1), PosDir[t1][0](2))
-  u = ROOT.TVector3(PosDir[t1][1](0), PosDir[t1][1](1), PosDir[t1][1](2))
-  c = ROOT.TVector3(PosDir[t2][0](0), PosDir[t2][0](1), PosDir[t2][0](2))
-  v = ROOT.TVector3(PosDir[t2][1](0), PosDir[t2][1](1), PosDir[t2][1](2))
-  pq = a - c
-  uCrossv = u.Cross(v)
-  dist  = pq.Dot(uCrossv)/(uCrossv.Mag()+1E-8)
-  # u.a - u.c + s*|u|**2 - u.v*t = 0
-  # v.a - v.c + s*v.u - t*|v|**2 = 0
-  E = u.Dot(a) - u.Dot(c)
-  F = v.Dot(a) - v.Dot(c)
-  A, B = u.Mag2(), -u.Dot(v)
-  C, D = u.Dot(v), -v.Mag2()
-  t = -(C*E-A*F)/(B*C-A*D)
-  X = c.x()+v.x()*t
-  Y = c.y()+v.y()*t
-  Z = c.z()+v.z()*t
-
-  return X, Y, Z, abs(dist)
-
-def RedoVertexing(t1, t2):
-  PosDir = {}
-  for tr in [t1, t2]:
-    xx  = sTree.FitTracks[tr].getFittedState()
-    PosDir[tr] = [xx.getPos(), xx.getDir()]
-  xv, yv, zv, doca = myVertex(t1, t2, PosDir)
-  print(xv, yv, zv, doca)
-  
 # new geofile, load Shipgeo dictionary written by run_simScript.py
-#upkl    = Unpickler(fgeo)
-#ShipGeo = upkl.load('ShipGeo')
-#dy = ShipGeo.Yheight/u.m
-
+upkl    = Unpickler(fgeo)
+ShipGeo = upkl.load('ShipGeo')
+dy = ShipGeo.Yheight/u.m
 # -----Create geometry----------------------------------------------
 #import shipDet_conf
 #run = ROOT.FairRunSim()
@@ -87,19 +55,27 @@ def RedoVertexing(t1, t2):
 # -----Create geometry----------------------------------------------
 #modules = shipDet_conf.configure(run,ShipGeo)
 
-#import geomGeant4
+import geomGeant4
 #if hasattr(ShipGeo.Bfield,"fieldMap"):
 #  fieldMaker = geomGeant4.addVMCFields(ShipGeo, '', True, withVirtualMC = False)
 #else:
 #  print("no fieldmap given, geofile too old, not anymore support")
 #  exit(-1)
 sGeo = fgeo.Get("FAIRGeom")
-geoMat =  ROOT.genfit.TGeoMaterialInterface()
-ROOT.genfit.MaterialEffects.getInstance().init(geoMat)
+#geoMat =  ROOT.genfit.TGeoMaterialInterface()
+#ROOT.genfit.MaterialEffects.getInstance().init(geoMat)
 #bfield = ROOT.genfit.FairShipFields()
 #bfield.setField(fieldMaker.getGlobalField())
 #fM = ROOT.genfit.FieldManager.getInstance()
 #fM.init(bfield)
+
+blob_radius = 50.0  # cm
+blob_z = ShipGeo.UpstreamTagger.z
+target_z = ShipGeo.target.z0
+#vessel_r = min(sGeo.vetoStation.XMax, sGeo.vetoStation.YMax)
+
+
+#print(blob_radius, blob_z, target_z, vessel_r)
 
 volDict = {}
 i=0
@@ -158,13 +134,31 @@ ut.bookHist(h,'MCTrack_fPt', 'MC tracks Pt', 400, 0, 0.01)
 ut.bookHist(h,'MCTrack_fM', 'MC tracks M', 400, 0, 20)
 ut.bookHist(h,'MCTrack_fPdgCode', 'MC tracks PDG code', 400, 0, 20)
 
-ut.bookHist(h,'UBT_Y_versus_X_photon_hits', 'UBT Y versus X photon hits', 400, -1000, 1000, 400, 1000, 1000)
-ut.bookHist(h,'UBT_Z_versus_X_photon_hits', 'UBT Z versus X photon hits', 400, -1000, 1000, 400, 1000, 1000)
-ut.bookHist(h,'UBT_Z_versus_Y_photon_hits', 'UBT Z versus Y photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_Y_versus_X_muon_and_pion_hits', 'UBT Y versus X muon and pion hits; x [cm]; y [cm]; Muon and pion hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_Z_versus_X_muon_and_pion_hits', 'UBT Z versus X muon and pion hits; x [cm]; z [cm]; Muon and pion hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_Z_versus_Y_muon_and_pion_hits', 'UBT Z versus Y muon and pion hits; y [cm]; z [cm]; Muon and pion hits', 400, -1000, 1000, 400, 1000, 1000)
 
-ut.bookHist(h,'SBT_Y_versus_X_photon_hits', 'SBT Y versus X photon hits', 400, -1000, 1000, 400, 1000, 1000)
-ut.bookHist(h,'SBT_Z_versus_X_photon_hits', 'SBT Z versus X photon hits', 400, -1000, 1000, 400, 1000, 1000)
-ut.bookHist(h,'SBT_Z_versus_Y_photon_hits', 'SBT Z versus Y photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_Y_versus_X_electron_and_positron_hits', 'UBT Y versus X electron and positron hits; x [cm]; y [cm]; Electron and positron hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_Z_versus_X_electron_and_positron_hits', 'UBT Z versus X electron and positron hits; x [cm]; z [cm]; Electron and positron hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_Z_versus_Y_electron_and_positron_hits', 'UBT Z versus Y electron and positron hits; y [cm]; z [cm]; Electron and positron hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_electron_and_positron_momentum_versus_UBT_Z', 'UBT electron and positron momentum versus UBT Z; z [cm]; P [GeV]; Electron and positron hits', 400, -1000, 1000, 400, 0, 10)
+ut.bookHist(h,'UBT_electron_and_positron_momentum', 'UBT electron and positron momentum; P [GeV]; Electron and positron hits', 400, 0, 10)
+
+ut.bookHist(h,'UBT_Y_versus_X_photon_hits', 'UBT Y versus X photon hits; x [cm]; y [cm]; Photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_Z_versus_X_photon_hits', 'UBT Z versus X photon hits; x [cm]; z [cm]; Photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_Z_versus_Y_photon_hits', 'UBT Z versus Y photon hits; y [cm]; z [cm]; Photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'UBT_photon_energy_versus_UBT_Z', 'UBT photon energy versus UBT Z; z [cm]; Energy [GeV]; Photon hits', 400, -1000, 1000, 400, 0, 0.05)
+ut.bookHist(h,'UBT_photon_energy', 'UBT photon energy; Energy [GeV]; Photon hits', 400, 0, 0.05)
+ut.bookHist(h,'UBT_photon_momentum_versus_UBT_Z', 'UBT photon momentum versus UBT Z; z [cm]; P [GeV]; Photon hits', 400, -1000, 1000, 400, 0, 1000)
+ut.bookHist(h,'UBT_photon_momentum', 'UBT photon momentum; P [GeV]; Photon hits', 400, 0, 10)
+
+ut.bookHist(h,'SBT_Y_versus_X_photon_hits', 'SBT Y versus X photon hits; x [cm]; y [cm]; Photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'SBT_Z_versus_X_photon_hits', 'SBT Z versus X photon hits; x [cm]; z [cm]; Photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'SBT_Z_versus_Y_photon_hits', 'SBT Z versus Y photon hits; y [cm]; z [cm]; Photon hits', 400, -1000, 1000, 400, 1000, 1000)
+ut.bookHist(h,'SBT_photon_energy_versus_SBT_Z', 'SBT photon energy versus SBT Z; z [cm]; Energy [GeV]; Photon hits', 400, -1000, 1000, 400, 0, 0.05)
+ut.bookHist(h,'SBT_photon_energy', 'SBT photon energy; Energy [GeV]; Photon hits', 400, 0, 0.05)
+
+ut.bookHist(h,'pT_muons_tracks_that_miss_SST', 'p_{T} muons tracks that miss SST; p_{T} [GeV]; Number of muon tracks', 400, 0, 0.1)
 
 def makePlots():
   ut.bookCanvas(h, key='Digi_SBTHits_YvsX_canvas', title='Digi SBT Y vs X hit map', nx=800, ny=600, cx=1, cy=1)
@@ -249,12 +243,32 @@ def makePlots():
   ut.bookCanvas(h, key='MCTrack_fPdgCode_canvas', title='MC tracks PDG code', nx=800, ny=600, cx=1, cy=1)
   h['MCTrack_fPdgCode'].Draw()
 
+  ut.bookCanvas(h, key='UBT_Y_versus_X_muon_and_pion_hits', title='UBT Y versus X muon and pion hits', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_Y_versus_X_muon_and_pion_hits'].Draw()
+  ut.bookCanvas(h, key='UBT_Z_versus_X_muon_and_pion_hits', title='UBT Z versus X muon and pion hits', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_Y_versus_X_muon_and_pion_hits'].Draw()
+  ut.bookCanvas(h, key='UBT_Z_versus_Y_muon_and_pion_hits', title='UBT Z versus Y muon and pion hits', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_Y_versus_X_muon_and_pion_hits'].Draw()
+
+  ut.bookCanvas(h, key='UBT_Y_versus_X_electron_and_positron_hits', title='UBT Y versus X electron and positron hits', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_Y_versus_X_electron_and_positron_hits'].Draw()
+  ut.bookCanvas(h, key='UBT_Z_versus_X_electron_and_positron_hits', title='UBT Z versus X electron and positron hits', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_Y_versus_X_electron_and_positron_hits'].Draw()
+  ut.bookCanvas(h, key='UBT_Z_versus_Y_electron_and_positron_hits', title='UBT Z versus Y electron and positron hits', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_Y_versus_X_electron_and_positron_hits'].Draw()
+  ut.bookCanvas(h, key='UBT_electron_and_positron_momentum_versus_UBT_Z', title='UBT electron and positron momentum versus UBT Z', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_electron_and_positron_momentum_versus_UBT_Z'].Draw()
+  ut.bookCanvas(h, key='UBT_electron_and_positron_momentum', title='UBT electron and positron momentum', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_electron_and_positron_momentum'].Draw()
+  
   ut.bookCanvas(h, key='UBT_Y_versus_X_photon_hits', title='UBT Y versus X photon hits', nx=800, ny=600, cx=1, cy=1)
   h['UBT_Y_versus_X_photon_hits'].Draw()
   ut.bookCanvas(h, key='UBT_Z_versus_X_photon_hits', title='UBT Z versus X photon hits', nx=800, ny=600, cx=1, cy=1)
   h['UBT_Y_versus_X_photon_hits'].Draw()
   ut.bookCanvas(h, key='UBT_Z_versus_Y_photon_hits', title='UBT Z versus Y photon hits', nx=800, ny=600, cx=1, cy=1)
   h['UBT_Y_versus_X_photon_hits'].Draw()
+  ut.bookCanvas(h, key='UBT_photon_energy', title='UBT photon energy', nx=800, ny=600, cx=1, cy=1)
+  h['UBT_photon_energy'].Draw()
   
   ut.bookCanvas(h, key='SBT_Y_versus_X_photon_hits', title='SBT Y versus X photon hits', nx=800, ny=600, cx=1, cy=1)
   h['SBT_Y_versus_X_photon_hits'].Draw()
@@ -262,29 +276,130 @@ def makePlots():
   h['SBT_Y_versus_X_photon_hits'].Draw()
   ut.bookCanvas(h, key='SBT_Z_versus_Y_photon_hits', title='SBT Z versus Y photon hits', nx=800, ny=600, cx=1, cy=1)
   h['SBT_Y_versus_X_photon_hits'].Draw()
+  ut.bookCanvas(h, key='SBT_photon_energy_versus_SBT_Z', title='SBT photon energy versus SBT Z', nx=800, ny=600, cx=1, cy=1)
+  h['SBT_photon_energy_versus_SBT_Z'].Draw()
+  ut.bookCanvas(h, key='SBT_photon_energy', title='SBT photon energy', nx=800, ny=600, cx=1, cy=1)
+  h['SBT_photon_energy'].Draw()
+
+  ut.bookCanvas(h, key='PT_muons_miss_SST', title='p_{T} muons tracks that miss SST', nx=800, ny=600, cx=1, cy=1)
+  h['PT_muons_miss_SST'].Draw()
   
   print('finished making plots')
 
-# EM Debris: How many photons cross UBT (UpstreamTaggerPoint) and SBT (vetoPoint)
-def EM_debris_UBT_SBT():
-  photons_in_UBT = 0
-  for UpstreamTaggerPoint_it in sTree.UpstreamTaggerPoint:
-    UpstreamTaggerPoint_fPdgCode = UpstreamTaggerPoint_it.PdgCode()
-    if UpstreamTaggerPoint_fPdgCode != 22: continue
-    photons_in_UBT += 1
-    h['UBT_Y_versus_X_photon_hits'].Fill(UpstreamTaggerPoint_it.GetX(), UpstreamTaggerPoint_it.GetY())
-    h['UBT_Z_versus_X_photon_hits'].Fill(UpstreamTaggerPoint_it.GetX(), UpstreamTaggerPoint_it.GetZ())
-    h['UBT_Z_versus_Y_photon_hits'].Fill(UpstreamTaggerPoint_it.GetY(), UpstreamTaggerPoint_it.GetZ())
-    
-  photons_in_SBT = 0
-  for vetoPoint_it in sTree.vetoPoint:
-    vetoPoint_fPdgCode = vetoPoint_it.PdgCode()
-    if vetoPoint_fPdgCode != 22: continue
-    photons_in_SBT += 1
-    h['SBT_Y_versus_X_photon_hits'].Fill(vetoPoint_it.GetX(), vetoPoint_it.GetY())
-    h['SBT_Z_versus_X_photon_hits'].Fill(vetoPoint_it.GetX(), vetoPoint_it.GetZ())
-    h['SBT_Z_versus_Y_photon_hits'].Fill(vetoPoint_it.GetY(), vetoPoint_it.GetZ())
+import TrackExtrapolateTool
 
+def myVertex(t1,t2,PosDir):
+  # closest distance between two tracks
+  # d = |pq . u x v|/|u x v|
+  a = ROOT.TVector3(PosDir[t1][0](0), PosDir[t1][0](1), PosDir[t1][0](2))
+  u = ROOT.TVector3(PosDir[t1][1](0), PosDir[t1][1](1), PosDir[t1][1](2))
+  c = ROOT.TVector3(PosDir[t2][0](0), PosDir[t2][0](1), PosDir[t2][0](2))
+  v = ROOT.TVector3(PosDir[t2][1](0), PosDir[t2][1](1), PosDir[t2][1](2))
+  pq = a - c
+  uCrossv = u.Cross(v)
+  dist  = pq.Dot(uCrossv)/(uCrossv.Mag()+1E-8)
+  # u.a - u.c + s*|u|**2 - u.v*t = 0
+  # v.a - v.c + s*v.u - t*|v|**2 = 0
+  E = u.Dot(a) - u.Dot(c)
+  F = v.Dot(a) - v.Dot(c)
+  A, B = u.Mag2(), -u.Dot(v)
+  C, D = u.Dot(v), -v.Mag2()
+  t = -(C*E-A*F)/(B*C-A*D)
+  X = c.x()+v.x()*t
+  Y = c.y()+v.y()*t
+  Z = c.z()+v.z()*t
+
+  return X, Y, Z, abs(dist)
+
+# Position resolution: Trace back muon from SST to UBT (w/o) SBT requirement
+def position_resolution_muon_from_SST_to_UBT():
+  # Check how many muons miss SST
+  track = -1
+  PosDir = {}
+  for i, mc in enumerate(sTree.MCTrack):
+    if abs(mc.GetPdgCode()) != 13: continue
+    p_start = ROOT.TVector3(mc.GetPx(), mc.GetPy(), mc.GetPz())
+    pt = p_start.Perp()
+    reached_ubt = any(hit.GetTrackID() == i for hit in sTree.UpstreamTaggerPoint)
+    reached_sst = any(hit.GetTrackID() == i for hit in sTree.strawtubesPoint)
+    if not reached_sst:
+      h['pT_muons_tracks_that_miss_SST'].Fill(pt)
+
+    if reached_ubt and reached_sst:
+      track += 1
+      if track >= len(sTree.FitTracks): continue
+      FitTracksObj = sTree.FitTracks[track]
+      fitStatus = FitTracksObj.getFitStatus()
+      if not fitStatus.isFitConverged(): continue
+      rep = FitTracksObj.getFittedState()
+      PosDir[track] = [rep.getPos(), rep.getDir()]
+      
+  if len(PosDir) > 1:
+    x, y, z, doca = myVertex(0, 1, PosDir)
+    if doca < 2:
+      print(x, y, z, doca)
+
+      #print("vertex is at  < 5cm from vessel wall")
+        
+      #ip_pos = rep.getPos()
+      #ip = ip_pos.Perp()
+      #if ip > 250.0: continue
+      
+      #if hasattr(ShipGeo, "UpstreamTagger"):
+      #rc, pos, mom = TrackExtrapolateTool.extrapolateToPlane(FitTracksObj, ShipGeo.UpstreamTagger.z)
+      #print(FitTracksObj, rc, pos, mom)
+      #if pos is None and mom is None: continue
+      #print(pos.X(), vtx.X())
+      
+# Hit Map of muon crossing UBT (extended) with 1s spill, to obtain Max rate capability. 
+# What is the e-/e+ flux at UBT Z position and what is their momentum.
+# what is the P of the photons.
+def UBT_hit_maps_and_particle_flux():
+  for UpstreamTaggerPoint_it in sTree.UpstreamTaggerPoint:
+    trackID = UpstreamTaggerPoint_it.GetTrackID()
+    if trackID < 0 or trackID >= sTree.MCTrack.GetEntries(): continue
+    mc = sTree.MCTrack[trackID]
+    px, py, pz = mc.GetPx(), mc.GetPy(), mc.GetPz()
+    mom = ROOT.TMath.Sqrt(px**2 + py**2 + pz**2)
+    if abs(mc.GetPdgCode()) == 13 or abs(mc.GetPdgCode()) == 221:
+      h['UBT_Y_versus_X_muon_and_pion_hits'].Fill(UpstreamTaggerPoint_it.GetX(), UpstreamTaggerPoint_it.GetY())
+      h['UBT_Z_versus_X_muon_and_pion_hits'].Fill(UpstreamTaggerPoint_it.GetX(), UpstreamTaggerPoint_it.GetZ())
+      h['UBT_Z_versus_Y_muon_and_pion_hits'].Fill(UpstreamTaggerPoint_it.GetY(), UpstreamTaggerPoint_it.GetZ())
+    elif abs(mc.GetPdgCode()) == 11:
+      h['UBT_Y_versus_X_electron_and_positron_hits'].Fill(UpstreamTaggerPoint_it.GetX(), UpstreamTaggerPoint_it.GetY())
+      h['UBT_Z_versus_X_electron_and_positron_hits'].Fill(UpstreamTaggerPoint_it.GetX(), UpstreamTaggerPoint_it.GetZ())
+      h['UBT_Z_versus_Y_electron_and_positron_hits'].Fill(UpstreamTaggerPoint_it.GetY(), UpstreamTaggerPoint_it.GetZ())
+      h['UBT_electron_and_positron_momentum_versus_UBT_Z'].Fill(UpstreamTaggerPoint_it.GetZ(), mom)
+      h['UBT_electron_and_positron_momentum'].Fill(mom)
+    elif mc.GetPdgCode() == 22:
+      h['UBT_photon_momentum_versus_UBT_Z'].Fill(UpstreamTaggerPoint_it.GetZ(), mom)
+      h['UBT_photon_momentum'].Fill(mom)
+
+# EM Debris: How many photons cross UBT (UpstreamTaggerPoint) and SBT (vetoPoint)
+# Check E_gamma spectra at UBT z position
+def EM_debris_UBT_SBT():
+  for UpstreamTaggerPoint_it in sTree.UpstreamTaggerPoint:
+    trackID = UpstreamTaggerPoint_it.GetTrackID()
+    if trackID < 0 or trackID >= sTree.MCTrack.GetEntries(): continue
+    mc = sTree.MCTrack[trackID]
+    if mc.GetPdgCode() == 22:
+      h['UBT_Y_versus_X_photon_hits'].Fill(UpstreamTaggerPoint_it.GetX(), UpstreamTaggerPoint_it.GetY())
+      h['UBT_Z_versus_X_photon_hits'].Fill(UpstreamTaggerPoint_it.GetX(), UpstreamTaggerPoint_it.GetZ())
+      h['UBT_Z_versus_Y_photon_hits'].Fill(UpstreamTaggerPoint_it.GetY(), UpstreamTaggerPoint_it.GetZ())
+      h['UBT_photon_energy_versus_SBT_Z'].Fill(UpstreamTaggerPoint_it.GetZ(), mc.GetEnergy())
+      h['UBT_photon_energy'].Fill(mc.GetEnergy())
+    
+  for vetoPoint_it in sTree.vetoPoint:
+    trackID = vetoPoint_it.GetTrackID()
+    if trackID < 0 or trackID >= sTree.MCTrack.GetEntries(): continue
+    mc = sTree.MCTrack[trackID]
+    if mc.GetPdgCode() == 22:
+      h['SBT_Y_versus_X_photon_hits'].Fill(vetoPoint_it.GetX(), vetoPoint_it.GetY())
+      h['SBT_Z_versus_X_photon_hits'].Fill(vetoPoint_it.GetX(), vetoPoint_it.GetZ())
+      h['SBT_Z_versus_Y_photon_hits'].Fill(vetoPoint_it.GetY(), vetoPoint_it.GetZ())
+      h['SBT_photon_energy_versus_SBT_Z'].Fill(vetoPoint_it.GetZ(), mc.GetEnergy())
+      h['SBT_photon_energy'].Fill(mc.GetEnergy())
+      
 # Fill digi SBT Hits plots
 def fill_digi_SBT_Hits_plots():
   for Digi_SBTHits_it in sTree.Digi_SBTHits:
@@ -403,7 +518,9 @@ def myEventLoop(n):
   fill_vetoPoint_plots()
   fill_strawtubesPoint_plots()
   fill_MCtrack_plots()
+  UBT_hit_maps_and_particle_flux()
   EM_debris_UBT_SBT()
+  position_resolution_muon_from_SST_to_UBT()
   
 sTree.GetEvent(0)
 options.nEvents = min(sTree.GetEntries(),options.nEvents)
@@ -411,8 +528,8 @@ options.nEvents = min(sTree.GetEntries(),options.nEvents)
 for n in range(options.nEvents):
   myEventLoop(n)
   sTree.FitTracks.Delete()
-
 makePlots()
+
 # output histograms
 hfile = options.inputFile.split(',')[0].replace('_rec','_ana')
 if "/eos" in hfile or not options.inputFile.find(',')<0:
