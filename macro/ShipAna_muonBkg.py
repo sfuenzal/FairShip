@@ -313,9 +313,16 @@ def myVertex(t1,t2,PosDir):
 
 # Position resolution: Trace back muon from SST to UBT (w/o) SBT requirement
 def position_resolution_muon_from_SST_to_UBT():
-  # Check how many muons miss SST
+  
+  #for fT in sTree.FitTracks:
+    #rc,pos,mom = TrackExtrapolateTool.extrapolateToPlane(fT,ShipGeo.TimeDet.z)
+    #print(rc,pos,mom)
+    #hitMuonUBT, posMuonUBT, momMuonUBT = TrackExtrapolateTool.extrapolateToPlane(fT, ShipGeo.UpstreamTagger.z)
+    #hitMuonSST, posMuonSST, momMuonSST = TrackExtrapolateTool.extrapolateToPlane(fT, ShipGeo.strawtubes.z)
+    
+  
   track = -1
-  PosDir = {}
+  #PosDir = {}
   for i, mc in enumerate(sTree.MCTrack):
     if abs(mc.GetPdgCode()) != 13: continue
     p_start = ROOT.TVector3(mc.GetPx(), mc.GetPy(), mc.GetPz())
@@ -332,12 +339,22 @@ def position_resolution_muon_from_SST_to_UBT():
       fitStatus = FitTracksObj.getFitStatus()
       if not fitStatus.isFitConverged(): continue
       rep = FitTracksObj.getFittedState()
-      PosDir[track] = [rep.getPos(), rep.getDir()]
+      #true_p = ROOT.TVector3(mc.GetPx(), mc.GetPy(), mc.GetPz())
+      true_vtx = ROOT.TVector3(mc.GetStartX(), mc.GetStartY(), mc.GetStartZ())
+      fitted_vtx = rep.getPos()
+
+      doca = ROOT.TMath.Sqrt((fitted_vtx.X() - true_vtx.X())**2 +
+                             (fitted_vtx.Y() - true_vtx.Y())**2 +
+                             (fitted_vtx.Z() - true_vtx.Z())**2)
+
+      print(doca, rep.getPDG())
+      #PosDir[track] = [rep.getPos(), rep.getDir()]
       
-  if len(PosDir) > 1:
-    x, y, z, doca = myVertex(0, 1, PosDir)
-    if doca < 2:
-      print(x, y, z, doca)
+  #if len(PosDir) > 1:
+    #x, y, z, doca = myVertex(0, 1, PosDir)
+    #print(x, y, z, doca)
+    #if doca < 2:
+      #print(x, y, z, doca)
 
       #print("vertex is at  < 5cm from vessel wall")
         
