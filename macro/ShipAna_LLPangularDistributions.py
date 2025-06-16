@@ -222,9 +222,9 @@ def getAngularDistributionsLLPs():
     for daughter_index, daughter_detector_hit in daughters.items():
       d = sTree.MCTrack.At(daughter_index)
       pdg = abs(d.GetPdgCode())
-      #hitUBT = daughter_detector_hit[0]
-      #hitSBT = daughter_detector_hit[1]
-      #hitSST = daughter_detector_hit[2]
+      hitUBT = daughter_detector_hit[0]
+      hitSBT = daughter_detector_hit[1]
+      hitSST = daughter_detector_hit[2]
       if pdg == daughter1_PDGcode:
         daughter1 = d
       elif pdg == daughter2_PDGcode:
@@ -235,7 +235,7 @@ def getAngularDistributionsLLPs():
     daughter2_true_p4 = ROOT.Math.PxPyPzEVector(daughter2.GetPx(), daughter2.GetPy(), daughter2.GetPz(), daughter2.GetEnergy())
 
     x_coordinate_true_vertex_decay, y_coordinate_true_vertex_decay, z_coordinate_true_vertex_decay = daughter1.GetStartX(), daughter1.GetStartY(), daughter1.GetStartZ()
-
+  
     cos_angle_1 = (daughter1_true_p4.Px()*HNL_true_p4.Px() + daughter1_true_p4.Py()*HNL_true_p4.Py() + daughter1_true_p4.Pz()*HNL_true_p4.Pz()) / (daughter1_true_p4.P() * HNL_true_p4.P())
     angle_1 = ROOT.TMath.ACos(cos_angle_1)*ROOT.TMath.RadToDeg()
 
