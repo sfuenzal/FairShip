@@ -16,22 +16,23 @@ repos:
   - id: check-executables-have-shebangs
   - id: mixed-line-ending
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.11.10
+  rev: v0.12.0
   hooks:
-  - id: ruff
+  - id: ruff-check
     types_or: [python, pyi, jupyter]
     args: [--fix, --show-fixes]
   - id: ruff-format
+    files: ^(python/experimental/|geometry/geometry_config\.py$)
 - repo: https://github.com/PyCQA/pydocstyle.git
   rev: 6.3.0
   hooks:
   - id: pydocstyle
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v20.1.4
+  rev: v20.1.6
   hooks:
   - id: clang-format
     types_or: [c++, c, cuda]
-    exclude: LinkDef.h
+    exclude: LinkDef.h|muon|hcal|ecal|shipdata|shipgen|pid|passive|nutaudet|TimeDet|UpstreamTagger|gconfig|field|splitcal|strawtubes
 - repo: https://github.com/cpplint/cpplint
   rev: 2.0.2
   hooks:
@@ -45,6 +46,7 @@ repos:
   rev: "v2.4.1"
   hooks:
     - id: codespell
+      exclude: muon|ecal|hcal
 - repo: https://github.com/pycqa/isort
   rev: 6.0.1
   hooks:
@@ -56,12 +58,12 @@ repos:
   hooks:
   - id: cmake-format
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.19.1
+  rev: v3.20.0
   hooks:
   - id: pyupgrade
     args: [--py39-plus]
 ci:
   autofix_prs: false
-  skip: [ruff, ruff-format, pydocstyle, clang-format, cpplint, cmakelint, isort, cmake-format, codespell]
+  skip: [ruff-check, pydocstyle, cpplint, cmakelint, isort, cmake-format]
   autoupdate_commit_msg: "chore(deps): update pre-commit hooks"
   autofix_commit_msg: "style: pre-commit fixes"

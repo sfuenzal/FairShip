@@ -21,7 +21,7 @@ def getParameter(x, ship_geo, latestShipGeo):
     a = getattr(ship_geo, top)
     if hasattr(a, last):
         return getattr(a, last)
-        # not in the list of recorded parameteres. probably added after
+        # not in the list of recorded parameters. probably added after
         # creation of file. Check newest geometry_config:
     a = getattr(latestShipGeo, top)
     return getattr(a, last)
@@ -264,7 +264,7 @@ def configure_snd_mtc(yaml_file, ship_geo):
     )
     detectorList.append(mtc)
 
-def configure_veto(yaml_file):
+def configure_veto(yaml_file, z0):
     with open(yaml_file) as file:
         config = yaml.safe_load(file)
 
@@ -276,7 +276,7 @@ def configure_veto(yaml_file):
         veto_geo.xendInner,
         veto_geo.ystartInner,
         veto_geo.yendInner,
-        veto_geo.z0,
+        z0,
     )
 
     Veto.SetLiquidVeto(1)
@@ -342,22 +342,16 @@ def configure(run, ship_geo):
         cave.SetGeometryFileName("caveWithAir.geo")
     detectorList.append(cave)
 
-    # magnetized hadron absorber defined in ShipMuonShield
     TargetStation = ROOT.ShipTargetStation(
         "TargetStation",
         ship_geo.target.length,
         ship_geo.target.z,
-        ship_geo.targetOpt,
-        ship_geo.target.sl,
+        ship_geo.targetVersion,
+        ship_geo.target.nS
     )
 
-    if ship_geo.targetOpt > 10:
-        slices_length = ROOT.std.vector("float")()
-        slices_material = ROOT.std.vector("std::string")()
-        for i in range(1, ship_geo.targetOpt + 1):
-            slices_length.push_back(eval("ship_geo.target.L" + str(i)))
-            slices_material.push_back(eval("ship_geo.target.M" + str(i)))
-        TargetStation.SetLayerPosMat(ship_geo.target.xy, slices_length, slices_material)
+    if ship_geo.targetVersion > 10:
+        TargetStation.SetLayerPosMat(ship_geo.target.xy, ship_geo.target.slices_length, ship_geo.target.slices_gap, ship_geo.target.slices_material)
     detectorList.append(TargetStation)
 
 
@@ -365,7 +359,7 @@ def configure(run, ship_geo):
 
     MuonShield = ROOT.ShipMuonShield(
         in_params,
-        ship_geo.cave.floorHeightMuonShield,
+        ship_geo.muShield.z,
         ship_geo.muShield.WithConstField,
         ship_geo.SC_mag
     )
@@ -420,16 +414,14 @@ def configure(run, ship_geo):
         magnet = ROOT.ShipMagnet("Magnet", "SHiP Magnet", ship_geo.Bfield.z)
     detectorList.append(magnet)
 
-    fairship = ROOT.gSystem.Getenv("FAIRSHIP")
+    fairship = os.environ["FAIRSHIP"]
 
-    if ship_geo.DecayVolumeMedium == "helium":
-        configure_veto(
-            os.path.join(fairship, "geometry", "veto_config_helium.yaml")
-        )  # put conditions for the design
-    if ship_geo.DecayVolumeMedium == "vacuums":
-        configure_veto(
-            os.path.join(fairship, "geometry", "veto_config_vacuums.yaml")
-        )  # put conditions for the design
+    configure_veto(
+        os.path.join(
+            fairship, f"geometry/veto_config_{ship_geo.DecayVolumeMedium}.yaml"
+        ),
+        ship_geo.decayVolume.z0,
+    )
 
     # For SND
     if ship_geo.SND:
@@ -440,9 +432,6 @@ def configure(run, ship_geo):
                 ship_geo
             )
         else:
-            # This parameters are taken from the top geometry_config
-            # snd_zTot = 3 * u.m #space allocated to Muon spectrometer
-            # snd_zMudetC=ship_geo.Chamber1.z -ship_geo.chambers.Tub1length - snd_zTot/2 -31*u.cm
             configure_snd_old(
             os.path.join(fairship, "geometry", "snd_config_old.yaml"),
             ship_geo.tauMudet.Ztot,
@@ -451,10 +440,6 @@ def configure(run, ship_geo):
             )
 
 
-    # for backward compatibility
-    if not hasattr(ship_geo.strawtubes, "YPlaneOffset"):
-        ship_geo.strawtubes.YLayerOffset = ship_geo.strawtubes.StrawPitch / 2.0
-        ship_geo.strawtubes.YPlaneOffset = ship_geo.strawtubes.StrawPitch / 4.0
     if ship_geo.strawDesign > 1:
         # for backward compatibility
         if ship_geo.strawDesign == 10 and not hasattr(
@@ -485,10 +470,8 @@ def configure(run, ship_geo):
         Strawtubes.SetStrawPitch(
             ship_geo.strawtubes.StrawPitch,
             ship_geo.strawtubes.YLayerOffset,
-            ship_geo.strawtubes.YPlaneOffset,
         )
         Strawtubes.SetDeltazLayer(ship_geo.strawtubes.DeltazLayer)
-        Strawtubes.SetDeltazPlane(ship_geo.strawtubes.DeltazPlane)
         Strawtubes.SetStrawsPerLayer(ship_geo.strawtubes.StrawsPerLayer)
         Strawtubes.SetStereoAngle(ship_geo.strawtubes.ViewAngle)
         Strawtubes.SetWireThickness(ship_geo.strawtubes.WireThickness)
@@ -496,9 +479,7 @@ def configure(run, ship_geo):
         Strawtubes.SetVacBox_y(ship_geo.strawtubes.VacBox_y)
         Strawtubes.SetStrawLength(ship_geo.strawtubes.StrawLength)
 
-        Strawtubes.SetStrawLength12(ship_geo.strawtubes.StrawLength12)
-        Strawtubes.SetTr12YDim(ship_geo.strawtubes.tr12ydim)
-        Strawtubes.SetTr34YDim(ship_geo.strawtubes.tr34ydim)
+        Strawtubes.set_station_height(ship_geo.strawtubes.station_height)
         # for the digitizing step
         Strawtubes.SetStrawResolution(
             getParameter("strawtubes.v_drift", ship_geo, latestShipGeo),

@@ -206,8 +206,7 @@ class ShipStack : public FairGenericStack
      **/
     TClonesArray* fParticles;            //!
 
-
-    /** Array of FairMCTracks containg the tracks written to the output **/
+    /** Array of FairMCTracks containing the tracks written to the output **/
     TClonesArray* fTracks;
 
 

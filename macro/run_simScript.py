@@ -109,7 +109,7 @@ parser.add_argument("-F",        dest="deepCopy",  help="default = False: copy o
 parser.add_argument("-t", "--test", dest="testFlag",  help="quick test", required=False,action="store_true")
 parser.add_argument("--dry-run", dest="dryrun",  help="stop after initialize", required=False,action="store_true")
 parser.add_argument("-D", "--display", dest="eventDisplay", help="store trajectories", required=False, action="store_true")
-parser.add_argument("--shieldName", help="The name of the SC shield in the database. SC default: sc_v6, Warm default: warm_opt", default="sc_v6", choices=["sc_v6", "warm_opt"])
+parser.add_argument("--shieldName", help="The name of the muon shield in the database to use.", default="New_HA_Design", choices=["New_HA_Design", "warm_opt"])
 parser.add_argument("--MesonMother",   dest="MM",  help="Choose DP production meson source: pi0, eta, omega, eta1, eta11", required=False,  default='pi0')
 parser.add_argument("--debug",  help="1: print weights and field 2: make overlap check", required=False, default=0, type=int, choices=range(0,3))
 parser.add_argument("--field_map", default=None, help="Specify spectrometer field map.")
@@ -133,6 +133,7 @@ parser.add_argument(
 parser.add_argument("--SND", dest="SND", help="Activate SND.", action='store_true')
 parser.add_argument("--SND_design", help="Choose SND design among [1,2,...]. 1: old version, 2: MTC", type=int, choices=[1, 2], default=1)
 parser.add_argument("--noSND", dest="SND", help="Deactivate SND. NOOP, as it currently defaults to off.", action='store_false')
+parser.add_argument("--target-yaml", help="Path to the yaml target config file", default=os.path.expandvars("$FAIRSHIP/geometry/target_config_Jun25.yaml"))
 
 options = parser.parse_args()
 
@@ -198,7 +199,6 @@ if (simEngine == "Ntuple" or simEngine == "MuonBack") and defaultInputFile :
   sys.exit()
 ROOT.gRandom.SetSeed(options.theSeed)  # this should be propagated via ROOT to Pythia8 and Geant4VMC
 shipRoot_conf.configure(0)     # load basic libraries, prepare atexit for python
-# - targetOpt      = 5  # 0=solid   >0 sliced, 5: 5 pieces of tungsten, 4 H20 slits, 17: Mo + W +H2O (default)
 #   nuTauTargetDesign = 3 #3 = 2018 design, 4 = not magnetized target + spectrometer
 ship_geo = ConfigRegistry.loadpy(
      "$FAIRSHIP/geometry/geometry_config.py",
@@ -211,7 +211,8 @@ ship_geo = ConfigRegistry.loadpy(
      shieldName=options.shieldName,
      DecayVolumeMedium=options.decayVolMed,
      SND=options.SND,
-     SND_design=options.SND_design
+     SND_design=options.SND_design,
+     TARGET_YAML=options.target_yaml
 )
 
 # Output file name, add dy to be able to setup geometry with ambiguities.
@@ -556,6 +557,7 @@ saveBasicParameters.execute(f"{options.outputDir}/geofile_full.{tag}.root",ship_
 
 # checking for overlaps
 if options.debug == 2:
+ ROOT.gROOT.SetWebDisplay("off")  # Workaround for https://github.com/root-project/root/issues/18881
  fGeo = ROOT.gGeoManager
  fGeo.SetNmeshPoints(10000)
  fGeo.CheckOverlaps(0.1)  # 1 micron takes 5minutes
