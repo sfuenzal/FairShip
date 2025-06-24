@@ -11,8 +11,10 @@ from decorators import *
 import shipRoot_conf
 from argparse import ArgumentParser
 
+ROOT.gROOT.SetBatch(True)
+
 shipRoot_conf.configure()
-#PDG = ROOT.TDatabasePDG.Instance()
+PDG = ROOT.TDatabasePDG.Instance()
 #chi2CutOff  = 4.
 fiducialCut = False
 #measCutFK = 25
@@ -126,7 +128,12 @@ ut.bookHist(h,'E_true_daughter2', 'E daughter 2 (true); E [GeV]; Events', 400, 0
 ut.bookHist(h,'theta_true_daughter2', '#theta daughter 2 (true); #theta [degree]; Events', 400, 0.0, 3.0)
 ut.bookHist(h,'phi_true_daughter2', '#phi daughter 2 (true); #phi [degree]; Events', 400, -180.0, 180.0)
 
+ut.bookHist(h,'cos_theta_star', 'cos(#theta^{*}) in HNL rest frame; cos(#theta^{*}); Events', 400, 0.9, 1.0)
+
 def makePlots():
+  ut.bookCanvas(h, key='cos_theta_star', title='cos(#theta^{*}) in HNL rest frame', nx=800, ny=600, cx=1, cy=1)
+  h['cos_theta_star'].Draw()
+
   ut.bookCanvas(h, key='x_coordinate_true_vertex_decay', title='x-coordinate decay vertex (true)', nx=800, ny=600, cx=1, cy=1)
   h['x_coordinate_true_vertex_decay'].Draw()
   ut.bookCanvas(h, key='y_coordinate_true_vertex_decay', title='y-coordinate decay vertex (true)', nx=800, ny=600, cx=1, cy=1)
@@ -234,6 +241,17 @@ def getAngularDistributionsLLPs():
     daughter1_true_p4 = ROOT.Math.PxPyPzEVector(daughter1.GetPx(), daughter1.GetPy(), daughter1.GetPz(), daughter1.GetEnergy())
     daughter2_true_p4 = ROOT.Math.PxPyPzEVector(daughter2.GetPx(), daughter2.GetPy(), daughter2.GetPz(), daughter2.GetEnergy())
 
+    HNL_true_lab_p4 = ROOT.TLorentzVector(HNL_true_p4.Px(), HNL_true_p4.Py(), HNL_true_p4.Pz(), HNL_true_p4.E())
+    daughter1_true_lab_p4 = ROOT.TLorentzVector(daughter1_true_p4.Px(), daughter1_true_p4.Py(), daughter1_true_p4.Pz(), daughter1_true_p4.E())
+
+    beta = -HNL_true_lab_p4.BoostVector()
+    electron_rest = ROOT.TLorentzVector(daughter1_true_lab_p4)
+    electron_rest.Boost(beta)
+
+    hnl_direction_lab = HNL_true_lab_p4.Vect().Unit()
+    electron_direction_rest = daughter1_true_p4.Vect().Unit()
+    cosThetaStar = electron_direction_rest.Dot(hnl_direction_lab)
+
     x_coordinate_true_vertex_decay, y_coordinate_true_vertex_decay, z_coordinate_true_vertex_decay = daughter1.GetStartX(), daughter1.GetStartY(), daughter1.GetStartZ()
   
     cos_angle_1 = (daughter1_true_p4.Px()*HNL_true_p4.Px() + daughter1_true_p4.Py()*HNL_true_p4.Py() + daughter1_true_p4.Pz()*HNL_true_p4.Pz()) / (daughter1_true_p4.P() * HNL_true_p4.P())
@@ -242,6 +260,8 @@ def getAngularDistributionsLLPs():
     cos_angle_2 = (daughter2_true_p4.Px()*HNL_true_p4.Px() + daughter2_true_p4.Py()*HNL_true_p4.Py() + daughter2_true_p4.Pz()*HNL_true_p4.Pz()) / (daughter2_true_p4.P() * HNL_true_p4.P())
     angle_2 = ROOT.TMath.ACos(cos_angle_2)*ROOT.TMath.RadToDeg()
 
+    h['cos_theta_star'].Fill(cosThetaStar)
+    
     h['x_coordinate_true_vertex_decay'].Fill(x_coordinate_true_vertex_decay)
     h['y_coordinate_true_vertex_decay'].Fill(y_coordinate_true_vertex_decay)
     h['z_coordinate_true_vertex_decay'].Fill(z_coordinate_true_vertex_decay)
