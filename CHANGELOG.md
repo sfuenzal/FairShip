@@ -27,6 +27,10 @@ it in future.
 * Folder ```SND``` is added for new versions of SND integrated to the Muon Shield
 * First version of ```MTC``` (```SND/MTC```) is introduced. Scint part is fully implemented, the Sci-Fi part is implemented in simplified version. Geometrical parameters of ```MTC``` are stored in ```geometry/MTC_config.yaml``` file
 * New key for ```macro/run_simScript.py``` for choosing SND options is added: ```--SND_design```
+* Geometry_config.py: Added MS design `New_HA_Design` based on the MS `warm_opt`  with new version of HA
+* Add access to decoded numbers (stations, views etc.) of strawtubes hits
+* Add June 2025 target configuration
+* Definition of Pressured Helium for the target, two version 200 Celsius degree and 90 Celsius degree.
 
 ### Fixed
 
@@ -44,6 +48,13 @@ it in future.
 * fix(ShieldUtils.py): changing code to be more pythonic, adding new element in the output tuple -- the list of the Muon Shield magnet z-coordinates, that can be used to set a location of SND inside the Muon Shield
 * fix(shipDet_conf.py): changing paths to yaml files to more pythonic (```os.path.join()``` now)
 * Fix splitcal strip dimensions and number of modules
+* fix: Ensure the web viewer is disabled when checking for geometry overlaps (workaround for https://github.com/root-project/root/issues/18881)
+* fix(EvtCalc): Fix crash due to string formatting
+* Fix: Field direction of first magnet section 2 was wrong
+* Fix: How the cavern is translated in z direction
+* Fix: Preliminary fix of the length of the Target (to be refine)
+* Fix: in `python/ShieldUtils.py` still used old coordinate system (SND was not correctly positioned in `python/shipDet_conf.py`)
+
 
 ### Changed
 
@@ -64,6 +75,19 @@ it in future.
 * Update tracker station z positions, fix UBT, TimeDet & SplitCal position (s. integration layout EDMS 3287817 v1)
 * feat(geometry): Make SplitCal the default calorimeter
 * Resize SplitCal to 4×6 m²
+* feat(geometry): Define target configuration in yaml
+* strawtubes detID is now 7-digit! (without plane number)
+* Change strawtubes detID decode function to tuple output
+* Change separate constructions of tracker stations 1/2 and 3/4 to being identical
+* `fWithConstShieldFiel` Defined as input flag for MS design in `geometry_config.py`
+* MS design have B field as parameter
+* Changed the parametrization of the field in `ShipMuonShield.cxx`
+* Make the warm muon shield with new hadron absorber the default option
+* feat(geometry): Change coordinate system to z_0 := start of target
+* Insert Proximity shield in the geometry
+* Removed old stuff legacy in `shipMuonShield.cxx` (like LE and fFloor)
+* Event Display: Don't try to recreate geometry config
+* Geometry: Make the tungsten target the default (Jun25 config)
 
 ### Removed
 
@@ -80,6 +104,9 @@ it in future.
 * run_simScript.py: remove --muShieldDesign flag
 * Remove unused straw veto station
 * ShipAna.py: remove broken calorimetry
+* Remove strawtubes_single class
+* Removed outdated version `sc_v6` since it is not fitting in the Cavern (also in the build-run)
+* feat(geometry): remove TP liquid scintillator variables
 
 ## 25.01
 
