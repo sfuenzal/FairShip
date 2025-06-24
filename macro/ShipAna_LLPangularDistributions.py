@@ -91,12 +91,12 @@ vetoDets={}
 log={}
 h = {}
 
-ut.bookHist(h,'x_coordinate_true_vertex_decay', 'x-coordinate decay vertex (true); x [cm]; Events', 400, -1000.0, 1000.0)
-ut.bookHist(h,'y_coordinate_true_vertex_decay', 'y-coordinate decay vertex (true); y [cm]; Events', 400, -1000.0, 1000.0)
-ut.bookHist(h,'z_coordinate_true_vertex_decay', 'z-coordinate decay vertex (true); z [cm]; Events', 400, -1000.0, 1000.0)
-ut.bookHist(h,'xz_coordinate_true_vertex_decay', 'xz-plane coordinates decay vertex (true); x [cm]; z [cm]; Events', 400, -1000.0, 1000.0, 400, -1000.0, 1000.0)
-ut.bookHist(h,'yz_coordinate_true_vertex_decay', 'yz-plane coordinates decay vertex (true); y [cm]; z [cm]; Events', 400, -1000.0, 1000.0, 400, -1000.0, 1000.0)
-ut.bookHist(h,'xy_coordinate_true_vertex_decay', 'xy-plane coordinates decay vertex (true); x [cm]; y [cm]; Events', 400, -1000.0, 1000.0, 400, -1000.0, 1000.0)
+ut.bookHist(h,'x_coordinate_true_vertex_decay', 'x-coordinate decay vertex (true); x [cm]; Events', 2000, -1000.0, 1000.0)
+ut.bookHist(h,'y_coordinate_true_vertex_decay', 'y-coordinate decay vertex (true); y [cm]; Events', 2000, -1000.0, 1000.0)
+ut.bookHist(h,'z_coordinate_true_vertex_decay', 'z-coordinate decay vertex (true); z [cm]; Events', 2000, -5000.0, 5000.0)
+ut.bookHist(h,'xz_coordinate_true_vertex_decay', 'xz-plane coordinates decay vertex (true); x [cm]; z [cm]; Events', 2000, -1000.0, 1000.0, 2000, -1000.0, 1000.0)
+ut.bookHist(h,'yz_coordinate_true_vertex_decay', 'yz-plane coordinates decay vertex (true); y [cm]; z [cm]; Events', 2000, -1000.0, 1000.0, 2000, -1000.0, 1000.0)
+ut.bookHist(h,'xy_coordinate_true_vertex_decay', 'xy-plane coordinates decay vertex (true); x [cm]; y [cm]; Events', 2000, -1000.0, 1000.0, 2000, -1000.0, 1000.0)
 
 ut.bookHist(h,'angle_theta_true_daughter_1_wrt_HNL', '#theta daughter 1 wrt HNL (true); #theta [degree]; Events', 400, 0.0, 25.0)
 ut.bookHist(h,'angle_theta_true_daughter_2_wrt_HNL', '#theta daughter 2 wrt HNL (true); #theta [degree]; Events', 400, 0.0, 25.0)
