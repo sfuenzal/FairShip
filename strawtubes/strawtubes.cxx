@@ -155,9 +155,15 @@ Bool_t  strawtubes::ProcessHits(FairVolume* vol)
     TVector3 uCrossv = u.Cross(v);
     Double_t dist2Wire  = fabs(pq.Dot(uCrossv))/(uCrossv.Mag()+1E-8);
     Double_t deltaTrackLength = gMC->TrackLength() - fLength;
+    TLorentzVector pos;
+    gMC->TrackPosition(pos);
+    TLorentzVector Mom;
+    gMC->TrackMomentum(Mom);
     AddHit(fTrackID, straw_uniqueId, TVector3(xmean, ymean,  zmean),
            TVector3(fMom.Px(), fMom.Py(), fMom.Pz()), fTime, deltaTrackLength,
-           fELoss,pdgCode,dist2Wire);
+           fELoss,pdgCode,dist2Wire,
+	   TVector3(pos.X(), pos.Y(), pos.Z()),
+	   TVector3(Mom.Px(), Mom.Py(), Mom.Pz()));
     if (dist2Wire>fInner_Straw_diameter/2){
      std::cout << "addhit " << dist2Wire<< " straw id " << straw_uniqueId << " pdgcode " << pdgCode<< " dot prod " << pq.Dot(uCrossv)<< std::endl;
      std::cout << " exit:" << gMC->IsTrackExiting() << " stop:" << gMC->IsTrackStop() << " disappeared:" << gMC->IsTrackDisappeared()<< std::endl;
@@ -936,13 +942,14 @@ void strawtubes::StrawEndPointsOriginal(Int_t detID, TVector3 &bot, TVector3 &to
   //cout << "top/bot="<< snb << " "<< vnb << " "<<  pnb << " "<< lnb << " "<< ypos<< " "<< fOffset_layer12<< " "<<fOffset_plane12<<endl;
 }
 strawtubesPoint* strawtubes::AddHit(Int_t trackID, Int_t detID,
-                                      TVector3 pos, TVector3 mom,
-                                      Double_t time, Double_t length,
-                                      Double_t eLoss, Int_t pdgCode, Double_t dist2Wire)
+				    TVector3 pos, TVector3 mom,
+				    Double_t time, Double_t length,
+				    Double_t eLoss, Int_t pdgCode, Double_t dist2Wire,
+				    TVector3 Lpos, TVector3 Lmom)
 {
   TClonesArray& clref = *fstrawtubesPointCollection;
   Int_t size = clref.GetEntriesFast();
   //std::cout << "adding hit detid " <<detID<<std::endl;
   return new(clref[size]) strawtubesPoint(trackID, detID, pos, mom,
-         time, length, eLoss, pdgCode, dist2Wire);
+					  time, length, eLoss, pdgCode, dist2Wire, Lpos, Lmom);
 }

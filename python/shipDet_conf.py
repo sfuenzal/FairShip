@@ -456,8 +456,8 @@ def configure(run, ship_geo):
     if ship_geo.DecayVolumeMedium == "vacuum_muonDIS":
         configure_veto(
             fairship + "/geometry/veto_config_vacuum_forMuonDISstudies.yaml"
-        )
-        
+        )  # put conditions for the design
+
     #For SND
     if ship_geo.SND:  # kept only one old design
         #This parameters are taken from the top geometry_config
@@ -647,8 +647,12 @@ def configure(run, ship_geo):
         run.SetField(fMagField)
 
     exclusionList = ["Veto"]
+<<<<<<< HEAD
     # exclusionList = ["Muon","Ecal","Hcal","Strawtubes","TargetTrackers","NuTauTarget","HighPrecisionTrackers",\
     #                 "Veto","Magnet","MuonShield","TargetStation","NuTauMudet","EmuMagnet", "TimeDet", "UpstreamTagger", "lastBitMuonShield"]
+=======
+    #exclusionList = ["Muon","Ecal","Hcal","Strawtubes","TargetTrackers","NuTauTarget","HighPrecisionTrackers","Veto","Magnet","MuonShield","TargetStation","NuTauMudet","EmuMagnet", "TimeDet", "UpstreamTagger", "lastBitMuonShield"]
+>>>>>>> 72ecbf89 (Changing UBT to a dummy counting plane and adding last bit of muon shield with Stellatryon v2 dimensions and remove veto system (Work in Progress))
 
     for x in detectorList:
         if x.GetName() in exclusionList:

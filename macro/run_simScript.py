@@ -141,6 +141,15 @@ parser.add_argument(
     default="helium"
 )
 
+parser.add_argument(
+    "--vacuum_muonDIS",
+    dest="decayVolMed",
+    help="Set Decay Volume medium to vacuum for veto task force muonDIS studies (vessel structure changes)",
+    action="store_const",
+    const="vacuum_muonDIS",
+    default="helium"
+)
+
 parser.add_argument("--SND", dest="SND", help="Activate SND.", action='store_true')
 parser.add_argument("--noSND", dest="SND", help="Deactivate SND. NOOP, as it currently defaults to off.", action='store_false')
 
