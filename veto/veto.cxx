@@ -1051,6 +1051,7 @@ void veto::ConstructGeometry()
 
     TGeoVolume* top = gGeoManager->GetTopVolume();
 
+    InitMedium("vacuum");
     InitMedium("vacuums");
     InitMedium("Aluminum");
     InitMedium("helium");

@@ -931,7 +931,7 @@ void ShipMuonShield::ConstructGeometry()
       auto *Cavern = new TGeoVolume("Cavern", compRock, concrete);
       Cavern->SetLineColor(11);  // grey
       Cavern->SetTransparency(50);
-      top->AddNode(Cavern, 1, new TGeoTranslation(0, 0, z_transition));
+      //top->AddNode(Cavern, 1, new TGeoTranslation(0, 0, z_transition));
 
 
       std::array<double, 9> fieldScale = {{1., 1., 1., 1., 1., 1., 1., 1., 1.}};
