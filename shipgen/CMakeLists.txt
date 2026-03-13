@@ -6,7 +6,7 @@ set(INCLUDE_DIRECTORIES
 ${CMAKE_SOURCE_DIR}/shipgen
 ${CMAKE_SOURCE_DIR}/generators
 ${CMAKE_SOURCE_DIR}/shipdata
-${CMAKE_SOURCE_DIR}/strawtubes
+${CMAKE_SOURCE_DIR}/veto
 ${genfit2_INCDIR}
 ${TPYTHIA6_INCLUDE_DIR}
 )

@@ -39,7 +39,7 @@ private:
 protected:
   Float_t id,parentid,pythiaid,w,px,py,pz,vx,vy,vz,ecut;
   TClonesArray* MCTrack; //!
-  TClonesArray* strawtubePoints; //!
+  TClonesArray* vetoPoints; //!
   TFile* fInputFile;    //!
   TTree* fTree;         //!
   int fNevents;

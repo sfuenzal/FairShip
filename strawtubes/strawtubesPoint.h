@@ -24,8 +24,7 @@ class strawtubesPoint : public FairMCPoint
      *@param eLoss    Energy deposit [GeV]
      **/
     strawtubesPoint(Int_t trackID, Int_t detID, TVector3 pos, TVector3 mom,
-		    Double_t tof, Double_t length, Double_t eLoss, Int_t pdgcode,
-		    Double_t dist, TVector3 Lpos, TVector3 Lmom);
+                     Double_t tof, Double_t length, Double_t eLoss, Int_t pdgcode,Double_t dist);
 
     /** Destructor **/
     virtual ~strawtubesPoint();
@@ -34,16 +33,13 @@ class strawtubesPoint : public FairMCPoint
     virtual void Print() const;
     Int_t PdgCode() const {return fPdgCode;}
     Double_t dist2Wire() const {return fdist2Wire;}
-    TVector3 LastPoint() const { return fLpos; }
-    TVector3 LastMom() const { return fLmom; }
-  
+
   private:
     /** Copy constructor **/
     strawtubesPoint(const strawtubesPoint& point);
     strawtubesPoint operator=(const strawtubesPoint& point);
 
     Int_t fPdgCode;
-    TVector3 fLpos, fLmom;
     Double_t fdist2Wire;
     ClassDef(strawtubesPoint,2);
 

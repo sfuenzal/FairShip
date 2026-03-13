@@ -8,7 +8,7 @@
 #include "MuonBackGenerator.h"
 #include "TDatabasePDG.h"               // for TDatabasePDG
 #include "TMath.h"                      // for Sqrt
-#include "strawtubesPoint.h"
+#include "vetoPoint.h"
 #include "ShipMCTrack.h"
 #include "TMCProcess.h"
 #include <algorithm>
@@ -67,9 +67,9 @@ Bool_t MuonBackGenerator::Init(const char* fileName, const int firstEvent, const
    fTree = fInputFile->Get<TTree>("cbmsim");
    fNevents   = fTree->GetEntries();
    MCTrack = new TClonesArray("ShipMCTrack");
-   strawtubePoints = new TClonesArray("strawtubesPoint");
+   vetoPoints = new TClonesArray("vetoPoint");
    fTree->SetBranchAddress("MCTrack",&MCTrack);
-   fTree->SetBranchAddress("strawtubesPoint",&strawtubePoints);
+   fTree->SetBranchAddress("vetoPoint",&vetoPoints);
   }
   return kTRUE;
 }
@@ -117,8 +117,8 @@ Bool_t MuonBackGenerator::ReadEvent(FairPrimaryGenerator* cpg)
         }
         if (id == -1) {   // use tree as input file
             Bool_t found = false;
-            for (int i = 0; i < strawtubePoints->GetEntries(); i++) {
-                auto* v = dynamic_cast<strawtubesPoint*>(strawtubePoints->At(i));
+            for (int i = 0; i < vetoPoints->GetEntries(); i++) {
+                auto* v = dynamic_cast<vetoPoint*>(vetoPoints->At(i));
                 Int_t abspid = TMath::Abs(v->PdgCode());
                 if (abspid == 13 or (not followMuons and abspid != 12 and abspid != 14)) {
                     found = true;
@@ -140,7 +140,7 @@ Bool_t MuonBackGenerator::ReadEvent(FairPrimaryGenerator* cpg)
                 if (gRandom->Uniform(0., 1.) > 0.99) {
                     std::vector<int> list = it->second;
                     for (Int_t i = 0; i < list.size(); i++) {
-                        auto* v = dynamic_cast<strawtubesPoint*>(strawtubePoints->At(list.at(i)));
+                        auto* v = dynamic_cast<vetoPoint*>(vetoPoints->At(list.at(i)));
                         Int_t muIndex = v->GetTrackID();
                         muList.insert({muIndex, i});
                     }
@@ -193,7 +193,7 @@ Bool_t MuonBackGenerator::ReadEvent(FairPrimaryGenerator* cpg)
          if (element.first==i){
           wanttracking = true;
           if (not followMuons){
-              auto* v = dynamic_cast<strawtubesPoint*>(strawtubePoints->At(element.second));
+              auto* v = dynamic_cast<vetoPoint*>(vetoPoints->At(element.second));
               TVector3 lpv = v->LastPoint();
               TVector3 lmv = v->LastMom();
               if (abspid == 22) {
