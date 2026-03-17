@@ -141,17 +141,13 @@ parser.add_argument(
     default="helium"
 )
 
-parser.add_argument(
-    "--vacuum_muonDIS",
-    dest="decayVolMed",
-    help="Set Decay Volume medium to vacuum for veto task force muonDIS studies (vessel structure changes)",
-    action="store_const",
-    const="vacuum_muonDIS",
-    default="helium"
-)
-
 parser.add_argument("--SND", dest="SND", help="Activate SND.", action='store_true')
 parser.add_argument("--noSND", dest="SND", help="Deactivate SND. NOOP, as it currently defaults to off.", action='store_false')
+
+# Scoring Planes Flags
+parser.add_argument("--HeBalloon", dest="HeBalloon",
+                    help="Enable HeBalloon Fiducial Volume as scoring planes",
+                    action="store_true")
 
 options = parser.parse_args()
 
@@ -270,7 +266,12 @@ rtdb = run.GetRuntimeDb()
 # import shipMuShield_only as shipDet_conf # special use case for an attempt to convert active shielding geometry for use with FLUKA
 # import shipTarget_only as shipDet_conf
 import shipDet_conf
-modules = shipDet_conf.configure(run,ship_geo)
+
+modules = shipDet_conf.configure(run,
+                                 ship_geo,
+                                 HeBalloon=options.HeBalloon)
+
+#modules = shipDet_conf.configure(run,ship_geo)
 # -----Create PrimaryGenerator--------------------------------------
 primGen = ROOT.FairPrimaryGenerator()
 if simEngine == "Pythia8":

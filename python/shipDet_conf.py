@@ -8,6 +8,70 @@ import yaml
 
 detectorList = []
 
+def addScoringPlane(planeName, xpos=0.0, ypos=0.0, zpos=0.0, xhalfw=500.0, yhalfh=500.0, lz=0.1, medium_name="iron",
+                    shape_type="Box", # NEW: Added shape_type parameter
+                    arb8_dz=0.0,      # NEW: Half-length in Z for Arb8
+                    arb8_corners=None # NEW: List of 16 doubles for Arb8 corners
+                   ):
+     """
+     Creates and configures a ScoringPlane object with a specified shape and material.
+
+     Args:
+         xpos (float): X-position of the scoring plane in cm.
+         ypos (float): Y-position of the scoring plane in cm.
+         zpos (float): Z-position of the scoring plane in cm.
+         xhalfw (float): Half-width of the scoring plane along X in cm (for Box).
+         yhalfh (float): Half-height of the scoring plane along Y in cm (for Box).
+         lz (float): Half-length of the scoring plane along Z in cm (for Box).
+         medium_name (str): The name of the material medium for the scoring plane.
+                            Defaults to "iron".
+         shape_type (str): The type of shape for the scoring plane ("Box" or "Arb8").
+                           Defaults to "Box".
+         arb8_dz (float): Half-length along Z for the Arb8 shape. Only used if shape_type is "Arb8".
+         arb8_corners (list): A list of 16 doubles representing the (x,y) coordinates of the 8 corners
+                              (4 for front face, 4 for back face) for the Arb8 shape.
+                              Order: (x1_front, y1_front, x2_front, y2_front, ..., x4_front, y4_front,
+                                      x1_back, y1_back, x2_back, y2_back, ..., x4_back, y4_back).
+                              Only used if shape_type is "Arb8".
+
+     Returns:
+         ROOT.ScoringPlane: The configured ScoringPlane object.
+     """
+     # The third argument 'ROOT.kFALSE' indicates particles are NOT stopped at this plane by default.
+     scoringplane = ROOT.ScoringPlane(planeName, ROOT.kTRUE, ROOT.kFALSE, xhalfw, yhalfh, lz)
+     scoringplane.SetVetoPointName(planeName)
+     
+     # Set the tailored medium name
+     scoringplane.SetMediumName(medium_name) 
+
+     # Set the shape type for the C++ object
+     scoringplane.SetShapeType(shape_type)
+
+     # If Arb8 shape, set its specific dimensions
+     if shape_type == "Arb8":
+         if arb8_corners is None or len(arb8_corners) != 16:
+             raise ValueError("For 'Arb8' shape_type, 'arb8_corners' must be a list of 16 doubles.")
+         # Convert Python list to C++ std::array for SetArb8Dimensions
+         # ROOT.std.array is directly callable.
+         # Note: ensure your ROOT setup has PyROOT correctly mapping std::array
+         # For older PyROOT versions, you might need to manually convert or use a different C++ data type.
+         corners_array = ROOT.std.array('double', 16)()
+         for i in range(16):
+             corners_array[i] = arb8_corners[i]
+         scoringplane.SetArb8Dimensions(arb8_dz, corners_array)
+     
+     scoringplane.SetXYZposition(xpos, ypos, zpos)
+
+     # Print information about the created plane for verification
+     shape_info = ""
+     if shape_type == "Box":
+         shape_info = f"halfW/halfH/halfL = {xhalfw} , {yhalfh} , {lz}"
+     elif shape_type == "Arb8":
+         shape_info = f"Arb8 dz={arb8_dz}, corners={arb8_corners}"
+     
+     print(f"    defined {planeName} at x,y,z = {xpos} , {ypos} , {zpos} cm ({shape_info}, medium: {medium_name})")
+     
+     return scoringplane
 
 def getParameter(x, ship_geo, latestShipGeo):
     lv = x.split(".")
@@ -272,7 +336,7 @@ def configure_veto(yaml_file):
     detectorList.append(Veto)
 
 
-def configure(run, ship_geo):
+def configure(run, ship_geo, HeBalloon = False):
     # ---- for backward compatibility ----
     if not hasattr(ship_geo, "DecayVolumeMedium"):
         raise ValueError(
@@ -625,6 +689,159 @@ def configure(run, ship_geo):
     lastBitMuonShield.SetZdim(ship_geo.lastBitMuonShield.z_dim)
     lastBitMuonShield.SetZposition(ship_geo.lastBitMuonShield.Z_Position)
     detectorList.append(lastBitMuonShield)
+
+
+    ScoPlane_xpos = []
+    ScoPlane_ypos = []
+    ScoPlane_zpos = []
+    ScoPlane_Add = []
+    ScoPlane_HalfX = []
+    ScoPlane_HalfY = []
+    ScoPlane_arb8_dz = []
+    ScoPlane_len = []
+    planeName_list = []
+    ScoPlane_medium = []
+    ScoPlane_shape = []
+    
+    with ConfigRegistry.register_config("basic") as c:
+        c.chambers = AttrDict(z=0 * u.cm)
+        c.chambers.Tub1length = 2.5 * u.m
+
+        totalLength = 60 * u.m
+        extraVesselLength = totalLength - 50 * u.m
+        magnetIncrease = 100. * u.cm
+        
+        z4 = 2438. * u.cm + magnetIncrease + extraVesselLength
+        zset = z4 - 4666. * u.cm - magnetIncrease - extraVesselLength
+
+        c.Chamber1 = AttrDict(z=zset)
+
+        c.tauMudet = AttrDict(z=0 * u.cm)
+        c.tauMudet.Ztot = 3 * u.m  # space allocated to Muon spectrometer
+
+        c.tauMudet.zMudetC = (
+            c.Chamber1.z
+            - c.chambers.Tub1length
+            - c.tauMudet.Ztot / 2
+            - 31 * u.cm
+        )
+        
+        z_pos_decay_vessel_front = (
+            c.tauMudet.zMudetC
+            + (c.tauMudet.Ztot) / 2
+            + 12.0 * u.cm
+        )
+
+    if HeBalloon:
+
+        balloon_thickness = 0.14  # cm
+
+        ScoPlane_xpos.extend([0.] * 2)  # cm
+        ScoPlane_ypos.extend([0.] * 2)  # cm
+
+        upstream_vessel_zpos = z_pos_decay_vessel_front
+        downstream_vessel_zpos = z_pos_decay_vessel_front + 50.3 * u.m
+        mid_vessel_zpos = (upstream_vessel_zpos + downstream_vessel_zpos) / 2.
+
+        ScoPlane_zpos.extend([mid_vessel_zpos] * 2)
+        ScoPlane_Add.extend([1] * 2)
+        ScoPlane_HalfX.extend([0] * 2)
+        ScoPlane_HalfY.extend([0] * 2)
+
+        ScoPlane_arb8_dz.extend(
+            [5030 / 2 - balloon_thickness * 2 - 1e-3] * 2
+        )
+        ScoPlane_len.extend(
+            [5030 / 2 - balloon_thickness * 2 - 1e-3] * 2
+        )
+
+        planeName_list.extend(["veto"] + ["DecayVolume"])
+        ScoPlane_medium.extend(["vacuum"] + ["helium"])
+        ScoPlane_shape.extend(["Arb8"] * 2)
+
+        veto = [
+            # upstream face
+            -0.5 * 1e2,
+            -1.35 * 1e2,   # corner 1
+            -0.5 * 1e2,
+            1.35 * 1e2,    # corner 4
+            0.5 * 1e2,
+            1.35 * 1e2,    # corner 3
+            0.5 * 1e2,
+            -1.35 * 1e2,   # corner 2
+
+            # downstream face
+            -2 * 1e2,
+            -3 * 1e2,      # corner 1
+            -2 * 1e2,
+            3 * 1e2,       # corner 4
+            2 * 1e2,
+            3 * 1e2,       # corner 3
+            2 * 1e2,
+            -3 * 1e2        # corner 2
+        ]
+        
+        Helium_balloon = [
+            # upstream face
+            -0.5 * 1e2 + balloon_thickness,
+            -1.35 * 1e2 + balloon_thickness,   # corner 1
+            -0.5 * 1e2 + balloon_thickness,
+            1.35 * 1e2 - balloon_thickness,    # corner 4
+            0.5 * 1e2 - balloon_thickness,
+            1.35 * 1e2 - balloon_thickness,    # corner 3
+            0.5 * 1e2 - balloon_thickness,
+            -1.35 * 1e2 + balloon_thickness,   # corner 2
+
+            # downstream face
+            -2 * 1e2 + balloon_thickness,
+            -3 * 1e2 + balloon_thickness,      # corner 1
+            -2 * 1e2 + balloon_thickness,
+            3 * 1e2 - balloon_thickness,       # corner 4
+            2 * 1e2 - balloon_thickness,
+            3 * 1e2 - balloon_thickness,       # corner 3
+            2 * 1e2 - balloon_thickness,
+            -3 * 1e2 + balloon_thickness       # corner 2
+        ]
+
+        faces = []
+        faces.append(veto)
+        faces.append(Helium_balloon)
+
+        print(
+            "Adding scoring planes:"
+            f" {len(ScoPlane_xpos)} planes defined"
+        )
+
+        jj = 0
+
+        for iz in range(len(ScoPlane_zpos)):
+
+            if ScoPlane_Add[iz]:
+
+                if ScoPlane_arb8_dz[iz] == 0:
+                    arb8_corners = None
+                else:
+                    arb8_corners = faces[jj]
+                    jj += 1
+
+                scoring_plane = addScoringPlane(
+                    planeName=planeName_list[iz],
+                    xpos=ScoPlane_xpos[iz],
+                    ypos=ScoPlane_ypos[iz],
+                    zpos=ScoPlane_zpos[iz],
+                    xhalfw=ScoPlane_HalfX[iz],
+                    yhalfh=ScoPlane_HalfY[iz],
+                    lz=ScoPlane_len[iz],
+                    medium_name=ScoPlane_medium[iz],
+                    shape_type=ScoPlane_shape[iz],
+                    arb8_dz=ScoPlane_arb8_dz[iz],
+                    arb8_corners=arb8_corners
+                )
+
+                detectorList.append(scoring_plane)
+
+            else:
+                print(f"... ScoringPlane {iz} is not to be defined")
     
     # -----   Magnetic field   -------------------------------------------
     if not hasattr(ship_geo.Bfield, "fieldMap"):
