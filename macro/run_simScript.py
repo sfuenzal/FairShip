@@ -146,7 +146,11 @@ parser.add_argument("--noSND", dest="SND", help="Deactivate SND. NOOP, as it cur
 
 # Scoring Planes Flags
 parser.add_argument("--HeBalloon", dest="HeBalloon",
-                    help="Enable HeBalloon Fiducial Volume as scoring planes",
+                    help="Enable HeBalloon for Fiducial Volume as scoring planes",
+                    action="store_true")
+
+parser.add_argument("--HollowVeto", dest="HollowVeto",
+                    help="Enable Fiducial Volume as hollow scoring planes",
                     action="store_true")
 
 options = parser.parse_args()
@@ -269,7 +273,8 @@ import shipDet_conf
 
 modules = shipDet_conf.configure(run,
                                  ship_geo,
-                                 HeBalloon=options.HeBalloon)
+                                 HeBalloon=options.HeBalloon,
+                                 HollowVeto=options.HollowVeto)
 
 #modules = shipDet_conf.configure(run,ship_geo)
 # -----Create PrimaryGenerator--------------------------------------
@@ -697,3 +702,7 @@ def checkOverlapsWithGeant4():
  mygMC.ProcessGeantCommand("/geometry/test/recursion_start 0")
  mygMC.ProcessGeantCommand("/geometry/test/recursion_depth 2")
  mygMC.ProcessGeantCommand("/geometry/test/run")
+
+
+# Borrar despues cuando se entienda el crash
+os._exit(0)

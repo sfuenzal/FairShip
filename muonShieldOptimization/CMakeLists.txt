@@ -27,6 +27,7 @@ exitHadronAbsorber.cxx
 pyFairModule.cxx
 simpleTarget.cxx
 ScoringPlane.cxx
+ScoringPlane_hollow.cxx
 )
 
 Set(HEADERS )

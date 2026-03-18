@@ -142,3 +142,7 @@ for global_variables.iEvent in range(options.firstEvent, options.nEvents):
  # mem_monitor()
 # end loop over events
 SHiP.finish()
+
+# Borrar despues cuando se entienda el crash
+import os
+os._exit(0)

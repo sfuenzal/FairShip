@@ -8,6 +8,23 @@ import yaml
 
 detectorList = []
 
+def setVesselPosition():
+     z_pos_decay_vessel_front = -999.
+     with ConfigRegistry.register_config("basic") as c:
+          c.chambers = AttrDict(z=0 * u.cm)
+          c.chambers.Tub1length = 2.5 * u.m
+          totalLength = 60 * u.m
+          extraVesselLength = totalLength - 50 * u.m
+          magnetIncrease = 100. * u.cm
+          z4 = 2438. * u.cm + magnetIncrease + extraVesselLength
+          zset = z4 - 4666. * u.cm - magnetIncrease - extraVesselLength
+          c.Chamber1 = AttrDict(z=zset)
+          c.tauMudet = AttrDict(z=0 * u.cm)
+          c.tauMudet.Ztot = 3 * u.m  # space allocated to Muon spectrometer
+          c.tauMudet.zMudetC = c.Chamber1.z - c.chambers.Tub1length - c.tauMudet.Ztot / 2 - 31 * u.cm
+          z_pos_decay_vessel_front = c.tauMudet.zMudetC + (c.tauMudet.Ztot) / 2 + 12.0 * u.cm
+     return z_pos_decay_vessel_front
+
 def addScoringPlane(planeName, xpos=0.0, ypos=0.0, zpos=0.0, xhalfw=500.0, yhalfh=500.0, lz=0.1, medium_name="iron",
                     shape_type="Box", # NEW: Added shape_type parameter
                     arb8_dz=0.0,      # NEW: Half-length in Z for Arb8
@@ -68,6 +85,73 @@ def addScoringPlane(planeName, xpos=0.0, ypos=0.0, zpos=0.0, xhalfw=500.0, yhalf
          shape_info = f"halfW/halfH/halfL = {xhalfw} , {yhalfh} , {lz}"
      elif shape_type == "Arb8":
          shape_info = f"Arb8 dz={arb8_dz}, corners={arb8_corners}"
+     
+     print(f"    defined {planeName} at x,y,z = {xpos} , {ypos} , {zpos} cm ({shape_info}, medium: {medium_name})")
+     
+     return scoringplane
+
+
+def addHollowScoringPlane(planeName, xpos=0.0, ypos=0.0, zpos=0.0, xhalfw=500.0, yhalfh=500.0, lz=0.1,
+                          medium_name="vacuum",
+                          shape_type="Arb8_hollow", # NEW: Added shape_type parameter
+                          arb8_dz_hollow=0.0,       # NEW: Half-length in Z for Hollow Arb8
+                          arb8_corners_outer=None,  # NEW: List of 16 doubles for outer Arb8 corners
+                          arb8_corners_inner=None   # NEW: List of 16 doubles for inner Arb8 corners
+                          ):
+     """
+     Creates and configures a hollow ScoringPlane_hollow object with a specified shape and material.
+
+     Args:
+     xpos (float): X-position of the scoring plane in cm.
+     ypos (float): Y-position of the scoring plane in cm.
+     zpos (float): Z-position of the scoring plane in cm.
+     xhalfw (float): Half-width of the scoring plane along X in cm (for Box).
+     yhalfh (float): Half-height of the scoring plane along Y in cm (for Box).
+     lz (float): Half-length of the scoring plane along Z in cm (for Box).
+     medium_name (str): The name of the material medium for the hollow scoring plane. Defaults to "vacuum".
+     shape_type (str): The type of shape for the hollow scoring plane ("Arb8_hollow").
+     arb8_dz (float): Half-length along Z for the hollow Arb8 shape. Only used if shape_type is "Arb8_hollow".
+     arb8_corners_outer/inner (list): A list of 16 doubles representing the (x,y) coordinates of the 8 corners
+     (4 for front face, 4 for back face) for the hollow Arb8 shape.
+     Order: (x1_front, y1_front, x2_front, y2_front, ..., x4_front, y4_front, x1_back, y1_back, x2_back, y2_back, ..., x4_back, y4_back).
+     Only used if shape_type is "Arb8_hollow".
+
+     Returns:
+         ROOT.ScoringPlane_hollow: The configured hollow ScoringPlane_hollow object.
+     """
+     # The third argument 'ROOT.kFALSE' indicates particles are NOT stopped at this plane by default.
+     #scoringplane = ROOT.ScoringPlane_hollow(planeName, ROOT.kTRUE, ROOT.kFALSE, xhalfw, yhalfh, lz)
+     scoringplane = ROOT.ScoringPlane_hollow(planeName, ROOT.kTRUE, ROOT.kFALSE)
+     scoringplane.SetVetoPointName(planeName)
+     
+     # Set the tailored medium name
+     scoringplane.SetMediumName(medium_name) 
+
+     # Set the shape type for the C++ object
+     scoringplane.SetShapeType(shape_type)
+
+     # If Arb8 shape, set its specific dimensions
+     if shape_type == "Arb8_hollow":
+         if (arb8_corners_outer is None or len(arb8_corners_outer) != 16) and (arb8_corners_inner is None or len(arb8_corners_inner)):
+              raise ValueError("For 'Arb8' shape_type, 'arb8_corners' must be a list of 16 doubles.")
+         # Convert Python list to C++ std::array for SetArb8Dimensions_hollow
+         # ROOT.std.array is directly callable.
+         # Note: ensure your ROOT setup has PyROOT correctly mapping std::array
+         # For older PyROOT versions, you might need to manually convert or use a different C++ data type.
+         corners_array_outer = ROOT.std.array('double', 16)()
+         corners_array_inner = ROOT.std.array('double', 16)()
+         for i in range(16):
+              corners_array_outer[i] = arb8_corners_outer[i]
+              corners_array_inner[i] = arb8_corners_inner[i]
+              
+         scoringplane.SetArb8Dimensions_hollow(arb8_dz_hollow, corners_array_outer, corners_array_inner)
+     
+     scoringplane.SetXYZposition(xpos, ypos, zpos)
+
+     # Print information about the created plane for verification
+     shape_info = ""
+     if shape_type == "Arb8_hollow":
+          shape_info = f"Arb8 dz hollow={arb8_dz_hollow}, corners_outer={arb8_corners_outer}, corners_inner={arb8_corners_inner}"
      
      print(f"    defined {planeName} at x,y,z = {xpos} , {ypos} , {zpos} cm ({shape_info}, medium: {medium_name})")
      
@@ -336,7 +420,7 @@ def configure_veto(yaml_file):
     detectorList.append(Veto)
 
 
-def configure(run, ship_geo, HeBalloon = False):
+def configure(run, ship_geo, HeBalloon = False, HollowVeto = False):
     # ---- for backward compatibility ----
     if not hasattr(ship_geo, "DecayVolumeMedium"):
         raise ValueError(
@@ -682,7 +766,7 @@ def configure(run, ship_geo, HeBalloon = False):
     timeDet.SetSizeX(2 * ship_geo.TimeDet.DX)
     timeDet.SetSizeY(2 * ship_geo.TimeDet.DY)
     detectorList.append(timeDet)
-
+    
     lastBitMuonShield = ROOT.lastBitMuonShield("lastBitMuonShield", ROOT.kTRUE)
     lastBitMuonShield.SetXdim(ship_geo.lastBitMuonShield.x_dim)
     lastBitMuonShield.SetYdim(ship_geo.lastBitMuonShield.y_dim)
@@ -690,189 +774,244 @@ def configure(run, ship_geo, HeBalloon = False):
     lastBitMuonShield.SetZposition(ship_geo.lastBitMuonShield.Z_Position)
     detectorList.append(lastBitMuonShield)
 
-
-    ScoPlane_xpos = []
-    ScoPlane_ypos = []
-    ScoPlane_zpos = []
-    ScoPlane_Add = []
-    ScoPlane_HalfX = []
-    ScoPlane_HalfY = []
-    ScoPlane_arb8_dz = []
-    ScoPlane_len = []
-    planeName_list = []
-    ScoPlane_medium = []
-    ScoPlane_shape = []
-    
-    with ConfigRegistry.register_config("basic") as c:
-        c.chambers = AttrDict(z=0 * u.cm)
-        c.chambers.Tub1length = 2.5 * u.m
-
-        totalLength = 60 * u.m
-        extraVesselLength = totalLength - 50 * u.m
-        magnetIncrease = 100. * u.cm
-        
-        z4 = 2438. * u.cm + magnetIncrease + extraVesselLength
-        zset = z4 - 4666. * u.cm - magnetIncrease - extraVesselLength
-
-        c.Chamber1 = AttrDict(z=zset)
-
-        c.tauMudet = AttrDict(z=0 * u.cm)
-        c.tauMudet.Ztot = 3 * u.m  # space allocated to Muon spectrometer
-
-        c.tauMudet.zMudetC = (
-            c.Chamber1.z
-            - c.chambers.Tub1length
-            - c.tauMudet.Ztot / 2
-            - 31 * u.cm
-        )
-        
-        z_pos_decay_vessel_front = (
-            c.tauMudet.zMudetC
-            + (c.tauMudet.Ztot) / 2
-            + 12.0 * u.cm
-        )
-
     if HeBalloon:
+         ScoPlane_xpos = []
+         ScoPlane_ypos = []
+         ScoPlane_zpos = []
+         ScoPlane_Add = []
+         ScoPlane_HalfX = []
+         ScoPlane_HalfY = []
+         ScoPlane_arb8_dz = []
+         ScoPlane_len = []
+         planeName_list = []
+         ScoPlane_medium = []
+         ScoPlane_shape = []
+         
+         balloon_thickness = 0.14  # cm
 
-        balloon_thickness = 0.14  # cm
+         ScoPlane_xpos.extend([0.])  # cm
+         ScoPlane_ypos.extend([0.])  # cm
 
-        ScoPlane_xpos.extend([0.] * 2)  # cm
-        ScoPlane_ypos.extend([0.] * 2)  # cm
+         z_pos_decay_vessel_front = setVesselPosition()
+         upstream_vessel_zpos = z_pos_decay_vessel_front
+         downstream_vessel_zpos = z_pos_decay_vessel_front + 50.3 * u.m
+         mid_vessel_zpos = (upstream_vessel_zpos + downstream_vessel_zpos) / 2.
+          
+         ScoPlane_zpos.extend([mid_vessel_zpos])
+         ScoPlane_Add.extend([1])
+         ScoPlane_HalfX.extend([0])
+         ScoPlane_HalfY.extend([0])
 
-        upstream_vessel_zpos = z_pos_decay_vessel_front
-        downstream_vessel_zpos = z_pos_decay_vessel_front + 50.3 * u.m
-        mid_vessel_zpos = (upstream_vessel_zpos + downstream_vessel_zpos) / 2.
+         ScoPlane_arb8_dz.extend(
+              [5030 / 2 - balloon_thickness * 2 - 1e-3]
+         )
+          
+         ScoPlane_len.extend(
+              [5030 / 2 - balloon_thickness * 2 - 1e-3]
+         )
 
-        ScoPlane_zpos.extend([mid_vessel_zpos] * 2)
-        ScoPlane_Add.extend([1] * 2)
-        ScoPlane_HalfX.extend([0] * 2)
-        ScoPlane_HalfY.extend([0] * 2)
-
-        ScoPlane_arb8_dz.extend(
-            [5030 / 2 - balloon_thickness * 2 - 1e-3] * 2
-        )
-        ScoPlane_len.extend(
-            [5030 / 2 - balloon_thickness * 2 - 1e-3] * 2
-        )
-
-        planeName_list.extend(["veto"] + ["DecayVolume"])
-        ScoPlane_medium.extend(["vacuum"] + ["helium"])
-        ScoPlane_shape.extend(["Arb8"] * 2)
-
-        veto = [
-            # upstream face
-            -0.5 * 1e2,
-            -1.35 * 1e2,   # corner 1
-            -0.5 * 1e2,
-            1.35 * 1e2,    # corner 4
-            0.5 * 1e2,
-            1.35 * 1e2,    # corner 3
-            0.5 * 1e2,
-            -1.35 * 1e2,   # corner 2
-
-            # downstream face
-            -2 * 1e2,
-            -3 * 1e2,      # corner 1
-            -2 * 1e2,
-            3 * 1e2,       # corner 4
-            2 * 1e2,
-            3 * 1e2,       # corner 3
-            2 * 1e2,
-            -3 * 1e2        # corner 2
-        ]
+         planeName_list.extend(["DecayVolume"])
+         ScoPlane_medium.extend(["helium"])
+         ScoPlane_shape.extend(["Arb8"])
         
-        Helium_balloon = [
-            # upstream face
-            -0.5 * 1e2 + balloon_thickness,
-            -1.35 * 1e2 + balloon_thickness,   # corner 1
-            -0.5 * 1e2 + balloon_thickness,
-            1.35 * 1e2 - balloon_thickness,    # corner 4
-            0.5 * 1e2 - balloon_thickness,
-            1.35 * 1e2 - balloon_thickness,    # corner 3
-            0.5 * 1e2 - balloon_thickness,
-            -1.35 * 1e2 + balloon_thickness,   # corner 2
+         Helium_balloon = [
+              # upstream face
+              -0.5 * 1e2 + balloon_thickness,
+              -1.35 * 1e2 + balloon_thickness,   # corner 1
+              -0.5 * 1e2 + balloon_thickness,
+              1.35 * 1e2 - balloon_thickness,    # corner 4
+              0.5 * 1e2 - balloon_thickness,
+              1.35 * 1e2 - balloon_thickness,    # corner 3
+              0.5 * 1e2 - balloon_thickness,
+              -1.35 * 1e2 + balloon_thickness,   # corner 2
+              
+              # downstream face
+              -2 * 1e2 + balloon_thickness,
+              -3 * 1e2 + balloon_thickness,      # corner 1
+              -2 * 1e2 + balloon_thickness,
+              3 * 1e2 - balloon_thickness,       # corner 4
+              2 * 1e2 - balloon_thickness,
+              3 * 1e2 - balloon_thickness,       # corner 3
+              2 * 1e2 - balloon_thickness,
+              -3 * 1e2 + balloon_thickness       # corner 2
+         ]
 
-            # downstream face
-            -2 * 1e2 + balloon_thickness,
-            -3 * 1e2 + balloon_thickness,      # corner 1
-            -2 * 1e2 + balloon_thickness,
-            3 * 1e2 - balloon_thickness,       # corner 4
-            2 * 1e2 - balloon_thickness,
-            3 * 1e2 - balloon_thickness,       # corner 3
-            2 * 1e2 - balloon_thickness,
-            -3 * 1e2 + balloon_thickness       # corner 2
-        ]
+         faces = []
+         faces.append(Helium_balloon)
 
-        faces = []
-        faces.append(veto)
-        faces.append(Helium_balloon)
+         print(f"Adding scoring planes:{len(ScoPlane_xpos)} planes defined")
+          
+         jj = 0
+         for iz in range(len(ScoPlane_zpos)):
+              if ScoPlane_Add[iz]:
+                   if ScoPlane_arb8_dz[iz] == 0:
+                        arb8_corners = None
+                   else:
+                        arb8_corners = faces[jj]
+                        jj += 1
 
-        print(
-            "Adding scoring planes:"
-            f" {len(ScoPlane_xpos)} planes defined"
-        )
+                   scoring_plane = addScoringPlane(planeName=planeName_list[iz],
+                                                   xpos=ScoPlane_xpos[iz],
+                                                   ypos=ScoPlane_ypos[iz],
+                                                   zpos=ScoPlane_zpos[iz],
+                                                   xhalfw=ScoPlane_HalfX[iz],
+                                                   yhalfh=ScoPlane_HalfY[iz],
+                                                   lz=ScoPlane_len[iz],
+                                                   medium_name=ScoPlane_medium[iz],
+                                                   shape_type=ScoPlane_shape[iz],
+                                                   arb8_dz=ScoPlane_arb8_dz[iz],
+                                                   arb8_corners=arb8_corners)
 
-        jj = 0
+                   detectorList.append(scoring_plane)
+                    
+              else:
+                   print(f"... ScoringPlane {iz} is not to be defined")
 
-        for iz in range(len(ScoPlane_zpos)):
+    if HollowVeto:
+         HollowScoPlane_xpos = []
+         HollowScoPlane_ypos = []
+         HollowScoPlane_zpos = []
+         HollowScoPlane_Add = []
+         HollowScoPlane_HalfX = []
+         HollowScoPlane_HalfY = []
+         HollowScoPlane_arb8_dz = []
+         HollowScoPlane_len = []
+         planeName_list = []
+         HollowScoPlane_medium = []
+         HollowScoPlane_shape = []
 
-            if ScoPlane_Add[iz]:
+         balloon_thickness = 0.1  # cm
+         
+         HollowScoPlane_xpos.extend([0.])  # cm
+         HollowScoPlane_ypos.extend([0.])  # cm
 
-                if ScoPlane_arb8_dz[iz] == 0:
-                    arb8_corners = None
-                else:
-                    arb8_corners = faces[jj]
-                    jj += 1
+         z_pos_decay_vessel_front = setVesselPosition()
+         upstream_vessel_zpos = z_pos_decay_vessel_front
+         downstream_vessel_zpos = z_pos_decay_vessel_front + 50.3 * u.m
+         mid_vessel_zpos = (upstream_vessel_zpos + downstream_vessel_zpos) / 2.
+          
+         HollowScoPlane_zpos.extend([mid_vessel_zpos])
+         HollowScoPlane_Add.extend([1])
+         HollowScoPlane_HalfX.extend([0])
+         HollowScoPlane_HalfY.extend([0])
 
-                scoring_plane = addScoringPlane(
-                    planeName=planeName_list[iz],
-                    xpos=ScoPlane_xpos[iz],
-                    ypos=ScoPlane_ypos[iz],
-                    zpos=ScoPlane_zpos[iz],
-                    xhalfw=ScoPlane_HalfX[iz],
-                    yhalfh=ScoPlane_HalfY[iz],
-                    lz=ScoPlane_len[iz],
-                    medium_name=ScoPlane_medium[iz],
-                    shape_type=ScoPlane_shape[iz],
-                    arb8_dz=ScoPlane_arb8_dz[iz],
-                    arb8_corners=arb8_corners
-                )
+         HollowScoPlane_arb8_dz.extend(
+              [5030 / 2 - balloon_thickness * 2 - 1e-3]
+         )
+          
+         HollowScoPlane_len.extend(
+              [5030 / 2 - balloon_thickness * 2 - 1e-3]
+         )
 
-                detectorList.append(scoring_plane)
+         planeName_list.extend(["veto"])
+         HollowScoPlane_medium.extend(["vacuum"])
+         HollowScoPlane_shape.extend(["Arb8_hollow"])
 
-            else:
-                print(f"... ScoringPlane {iz} is not to be defined")
-    
+         # =====================================================
+         # Outer pyramid (decay vessel wall)
+         # =====================================================
+
+         outer_veto = [
+              -0.5*1e2, -1.35*1e2,
+              -0.5*1e2,  1.35*1e2,
+              0.5*1e2,  1.35*1e2,
+              0.5*1e2, -1.35*1e2,
+              
+              -2*1e2, -3*1e2,
+              -2*1e2,  3*1e2,
+              2*1e2,  3*1e2,
+              2*1e2, -3*1e2
+         ]
+
+         # =====================================================
+         # Inner pyramid (helium decay volume)
+         # =====================================================
+         
+         inner_veto = [
+              -0.5*1e2 + balloon_thickness, -1.35*1e2 + balloon_thickness,
+              -0.5*1e2 + balloon_thickness,  1.35*1e2 - balloon_thickness,
+              0.5*1e2 - balloon_thickness,  1.35*1e2 - balloon_thickness,
+              0.5*1e2 - balloon_thickness, -1.35*1e2 + balloon_thickness,
+
+              -2*1e2 + balloon_thickness, -3*1e2 + balloon_thickness,
+              -2*1e2 + balloon_thickness,  3*1e2 - balloon_thickness,
+              2*1e2 - balloon_thickness,  3*1e2 - balloon_thickness,
+              2*1e2 - balloon_thickness, -3*1e2 + balloon_thickness
+         ]
+
+         faces_outer = []
+         faces_outer.append(outer_veto)
+
+         faces_inner = []
+         faces_inner.append(inner_veto)
+
+         print(
+              "Adding scoring planes:"
+              f" {len(HollowScoPlane_xpos)} planes defined"
+         )
+          
+         jj = 0
+
+         for iz in range(len(HollowScoPlane_zpos)):
+              if HollowScoPlane_Add[iz]:
+
+                   if HollowScoPlane_arb8_dz[iz] == 0:
+                        arb8_corners_outer = None
+                        arb8_corners_inner = None
+                   else:
+                        arb8_corners_outer = faces_outer[jj]
+                        arb8_corners_inner = faces_inner[jj]
+                        jj += 1
+
+                   hollow_scoring_plane = addHollowScoringPlane(planeName=planeName_list[iz],
+                                                                xpos=HollowScoPlane_xpos[iz],
+                                                                ypos=HollowScoPlane_ypos[iz],
+                                                                zpos=HollowScoPlane_zpos[iz],
+                                                                xhalfw=HollowScoPlane_HalfX[iz],
+                                                                yhalfh=HollowScoPlane_HalfY[iz],
+                                                                lz=HollowScoPlane_len[iz],
+                                                                medium_name=HollowScoPlane_medium[iz],
+                                                                shape_type=HollowScoPlane_shape[iz],
+                                                                arb8_dz_hollow=HollowScoPlane_arb8_dz[iz],
+                                                                arb8_corners_outer=arb8_corners_outer,
+                                                                arb8_corners_inner=arb8_corners_inner
+                                                                )
+
+                   detectorList.append(hollow_scoring_plane)
+                    
+              else:
+                   print(f"... ScoringPlane_hollow {iz} is not to be defined")
+          
     # -----   Magnetic field   -------------------------------------------
     if not hasattr(ship_geo.Bfield, "fieldMap"):
-        if ship_geo.strawDesign == 4 or ship_geo.strawDesign == 10:
-            fMagField = ROOT.ShipBellField(
-                "wilfried",
-                ship_geo.Bfield.max,
-                ship_geo.Bfield.z,
-                2,
-                ship_geo.Yheight / 2.0 * u.m,
-            )
-        else:
-            fMagField = ROOT.ShipBellField(
-                "wilfried",
-                ship_geo.Bfield.max,
-                ship_geo.Bfield.z,
-                1,
-                ship_geo.Yheight / 2.0 * u.m,
-            )
-        run.SetField(fMagField)
+         if ship_geo.strawDesign == 4 or ship_geo.strawDesign == 10:
+              fMagField = ROOT.ShipBellField(
+                   "wilfried",
+                   ship_geo.Bfield.max,
+                   ship_geo.Bfield.z,
+                   2,
+                   ship_geo.Yheight / 2.0 * u.m,
+              )
+         else:
+              fMagField = ROOT.ShipBellField(
+                   "wilfried",
+                   ship_geo.Bfield.max,
+                   ship_geo.Bfield.z,
+                   1,
+                   ship_geo.Yheight / 2.0 * u.m,
+              )
+         run.SetField(fMagField)
 
     exclusionList = ["Veto"]
     # exclusionList = ["Muon","Ecal","Hcal","Strawtubes","TargetTrackers","NuTauTarget","HighPrecisionTrackers",\
     #                 "Veto","Magnet","MuonShield","TargetStation","NuTauMudet","EmuMagnet", "TimeDet", "UpstreamTagger", "lastBitMuonShield"]
 
     for x in detectorList:
-        if x.GetName() in exclusionList:
-            continue
-        run.AddModule(x)
+         if x.GetName() in exclusionList:
+              continue
+         run.AddModule(x)
     # return list of detector elements
     detElements = {}
     for x in run.GetListOfModules():
-        detElements[x.GetName()] = x
+         detElements[x.GetName()] = x
     return detElements

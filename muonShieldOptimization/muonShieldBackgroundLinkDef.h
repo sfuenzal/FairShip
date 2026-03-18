@@ -10,4 +10,5 @@
 #pragma link C++ class  pyFairModule+;
 #pragma link C++ class  simpleTarget+;
 #pragma link C++ class  ScoringPlane+;
+#pragma link C++ class  ScoringPlane_hollow+;
 #endif
