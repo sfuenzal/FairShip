@@ -787,7 +787,7 @@ def configure(run, ship_geo, HeBalloon = False, HollowVeto = False):
          ScoPlane_medium = []
          ScoPlane_shape = []
          
-         balloon_thickness = 0.14  # cm
+         balloon_thickness = 0.01  # cm
 
          ScoPlane_xpos.extend([0.])  # cm
          ScoPlane_ypos.extend([0.])  # cm
@@ -815,25 +815,16 @@ def configure(run, ship_geo, HeBalloon = False, HollowVeto = False):
          ScoPlane_shape.extend(["Arb8"])
         
          Helium_balloon = [
-              # upstream face
-              -0.5 * 1e2 + balloon_thickness,
-              -1.35 * 1e2 + balloon_thickness,   # corner 1
-              -0.5 * 1e2 + balloon_thickness,
-              1.35 * 1e2 - balloon_thickness,    # corner 4
-              0.5 * 1e2 - balloon_thickness,
-              1.35 * 1e2 - balloon_thickness,    # corner 3
-              0.5 * 1e2 - balloon_thickness,
-              -1.35 * 1e2 + balloon_thickness,   # corner 2
-              
-              # downstream face
-              -2 * 1e2 + balloon_thickness,
-              -3 * 1e2 + balloon_thickness,      # corner 1
-              -2 * 1e2 + balloon_thickness,
-              3 * 1e2 - balloon_thickness,       # corner 4
-              2 * 1e2 - balloon_thickness,
-              3 * 1e2 - balloon_thickness,       # corner 3
-              2 * 1e2 - balloon_thickness,
-              -3 * 1e2 + balloon_thickness       # corner 2
+              # upstream
+              -96. + balloon_thickness, -180. + balloon_thickness,
+              -96. + balloon_thickness,  180. - balloon_thickness,
+              96. - balloon_thickness,  180. - balloon_thickness,
+              96. - balloon_thickness, -180. + balloon_thickness,
+              # downstream
+              -200. + balloon_thickness, -300. + balloon_thickness,
+              -200. + balloon_thickness,  300. - balloon_thickness,
+              200. - balloon_thickness,  300. - balloon_thickness,
+              200. - balloon_thickness, -300. + balloon_thickness
          ]
 
          faces = []
@@ -880,7 +871,7 @@ def configure(run, ship_geo, HeBalloon = False, HollowVeto = False):
          HollowScoPlane_medium = []
          HollowScoPlane_shape = []
 
-         balloon_thickness = 0.1  # cm
+         balloon_thickness = 0.01  # cm
          
          HollowScoPlane_xpos.extend([0.])  # cm
          HollowScoPlane_ypos.extend([0.])  # cm
@@ -912,31 +903,34 @@ def configure(run, ship_geo, HeBalloon = False, HollowVeto = False):
          # =====================================================
 
          outer_veto = [
-              -0.5*1e2, -1.35*1e2,
-              -0.5*1e2,  1.35*1e2,
-              0.5*1e2,  1.35*1e2,
-              0.5*1e2, -1.35*1e2,
-              
-              -2*1e2, -3*1e2,
-              -2*1e2,  3*1e2,
-              2*1e2,  3*1e2,
-              2*1e2, -3*1e2
+              # upstream
+              -96., -180.,
+              -96.,  180.,
+              96.,  180.,
+              96., -180.,
+              # downstream
+              -200., -300.,
+              -200.,  300.,
+              200.,  300.,
+              200., -300.
          ]
+
 
          # =====================================================
          # Inner pyramid (helium decay volume)
          # =====================================================
-         
-         inner_veto = [
-              -0.5*1e2 + balloon_thickness, -1.35*1e2 + balloon_thickness,
-              -0.5*1e2 + balloon_thickness,  1.35*1e2 - balloon_thickness,
-              0.5*1e2 - balloon_thickness,  1.35*1e2 - balloon_thickness,
-              0.5*1e2 - balloon_thickness, -1.35*1e2 + balloon_thickness,
 
-              -2*1e2 + balloon_thickness, -3*1e2 + balloon_thickness,
-              -2*1e2 + balloon_thickness,  3*1e2 - balloon_thickness,
-              2*1e2 - balloon_thickness,  3*1e2 - balloon_thickness,
-              2*1e2 - balloon_thickness, -3*1e2 + balloon_thickness
+         inner_veto = [
+              # upstream
+              -96. + balloon_thickness, -180. + balloon_thickness,
+              -96. + balloon_thickness,  180. - balloon_thickness,
+              96. - balloon_thickness,  180. - balloon_thickness,
+              96. - balloon_thickness, -180. + balloon_thickness,
+              # downstream
+              -200. + balloon_thickness, -300. + balloon_thickness,
+              -200. + balloon_thickness,  300. - balloon_thickness,
+              200. - balloon_thickness,  300. - balloon_thickness,
+              200. - balloon_thickness, -300. + balloon_thickness
          ]
 
          faces_outer = []

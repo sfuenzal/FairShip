@@ -195,7 +195,9 @@ if options.thedeccouplings:
 if options.testFlag:
   inputFile = "$FAIRSHIP/files/Cascade-parp16-MSTP82-1-MSEL4-76Mpot_1_5000.root"
 
-
+thereIstheVeto = False
+print("CHECK:    thereIstheVeto:", thereIstheVeto)
+  
 #sanity check
 if (HNL and options.RPVSUSY) or (HNL and options.DarkPhoton) or (options.DarkPhoton and options.RPVSUSY):
  print("cannot have HNL and SUSY or DP at the same time, abort")
@@ -488,10 +490,23 @@ if simEngine == "MuonBack":
  options.nEvents = min(options.nEvents,MuonBackgen.GetNevents())
  MCTracksWithHitsOnly = True # otherwise, output file becomes too big
  print('Process ',options.nEvents,' from input file, with Phi random=',options.phiRandom, ' with MCTracksWithHitsOnly',MCTracksWithHitsOnly)
- if options.followMuon :
+
+ for x in run.GetListOfModules():
+    if 'Veto' == x.GetName(): thereIstheVeto = True
+ 
+ if options.followMuon:
     options.fastMuon = True
-    modules['Veto'].SetFollowMuon()
- if options.fastMuon :    modules['Veto'].SetFastMuon()
+    if thereIstheVeto:
+      modules['Veto'].SetFollowMuon()
+    else:
+      modules['veto'].SetFollowMuon()
+ if options.fastMuon:
+    if thereIstheVeto:
+      modules['Veto'].SetFastMuon()
+    else:
+      modules['veto'].SetFastMuon()  # Massi, trying to make FastFollow compatible without tank and bkgtagger...
+      modules['veto'].SetOnlyMuons()
+      print("Massi from run_simScript says: called veto SetFastMuon() and SetOnlyMuons()")
 
  # optional, boost gamma2muon conversion
  # ROOT.kShipMuonsCrossSectionFactor = 100.
