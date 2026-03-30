@@ -254,7 +254,7 @@ for inputFolder in os.listdir(path):
             track_id = hit.GetTrackID()
             P = r.TMath.Sqrt(hit.GetPx() ** 2 + hit.GetPy() ** 2 + hit.GetPz() ** 2)
 
-            if 1000 < detID < 999999 and abs(pid) == 13 and P > P_threshold / u.GeV:
+            if detID == 1 and abs(pid) == 13 and P > P_threshold / u.GeV:
                 particle_name = pdg.GetParticle(hit.PdgCode()).GetName()
                 if track_id not in muon_ids:
                     muon_ids.append(track_id)
@@ -313,7 +313,7 @@ for inputFolder in os.listdir(path):
                 Pt = r.TMath.Sqrt(hit.GetPx() ** 2 + hit.GetPy() ** 2)
 
                 if (
-                    1000 < detID < 999999
+                    detID == 1
                     and track_id == muon_
                     and P > P_threshold / u.GeV
                 ):
