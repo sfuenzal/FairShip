@@ -140,6 +140,14 @@ parser.add_argument(
     const="vacuums",
     default="helium"
 )
+parser.add_argument(
+    "--dummy",
+    dest="decayVolMed",
+    help="Set Veto as a dummy plane used for counting, enclosing a helium decay volume.",
+    action="store_const",
+    const="dummy",
+    default="helium"
+)
 
 parser.add_argument("--SND", dest="SND", help="Activate SND.", action='store_true')
 parser.add_argument("--noSND", dest="SND", help="Deactivate SND. NOOP, as it currently defaults to off.", action='store_false')

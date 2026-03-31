@@ -255,8 +255,6 @@ def configure_veto(yaml_file):
         veto_geo.z0,
     )
 
-    Veto.SetLiquidVeto(1)
-
     Veto.SetVesselStructure(
         veto_geo.innerSupport,
         veto_geo.sensitiveThickness,
@@ -450,6 +448,10 @@ def configure(run, ship_geo):
     if ship_geo.DecayVolumeMedium == "vacuums":
         configure_veto(
             fairship + "/geometry/veto_config_vacuums.yaml"
+        )  # put conditions for the design
+    if ship_geo.DecayVolumeMedium == "dummy":
+        configure_veto(
+            fairship + "/geometry/veto_config_dummy.yaml"
         )  # put conditions for the design
 
     #For SND
