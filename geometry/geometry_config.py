@@ -426,49 +426,21 @@ with ConfigRegistry.register_config("basic") as c:
        c.strawtubes.tr12ydim           = int(c.Yheight/2.)
        c.strawtubes.tr34ydim           = int(c.Yheight/2.)
 
-
     #CAMM - For Nu tau detector, keep only these parameters which are used by others...
     c.tauMudet = AttrDict(z=0*u.cm)
     c.tauMudet.Ztot = 3 * u.m #space allocated to Muon spectrometer
     c.tauMudet.zMudetC = c.Chamber1.z -c.chambers.Tub1length - c.tauMudet.Ztot/2 -31*u.cm
 
-
-    #Upstream Tagger
-    UBT_x_crop = 113.4 * u.cm
+    # Upstream Tagger
     c.UpstreamTagger = AttrDict(z=0)
-    c.UpstreamTagger.Z_Glass = 0.2 * u.cm
-    c.UpstreamTagger.Y_Glass = 105 * u.cm
-    c.UpstreamTagger.X_Glass = 223. * u.cm  - UBT_x_crop
-    c.UpstreamTagger.Z_Glass_Border = 0.2 * u.cm
-    c.UpstreamTagger.Y_Glass_Border = 1.0 * u.cm
-    c.UpstreamTagger.X_Glass_Border = 1.0 * u.cm
-    c.UpstreamTagger.Z_PMMA = 0.8 * u.cm
-    c.UpstreamTagger.Y_PMMA = 108 * u.cm
-    c.UpstreamTagger.X_PMMA = 226 * u.cm  - UBT_x_crop
-    c.UpstreamTagger.DY_PMMA = 1.5 * u.cm
-    c.UpstreamTagger.DX_PMMA = 1.5 * u.cm
-    c.UpstreamTagger.DZ_PMMA = 0.1 * u.cm
-    c.UpstreamTagger.Z_FreonSF6 = 0.1 * u.cm
-    c.UpstreamTagger.Y_FreonSF6 = 107 * u.cm
-    c.UpstreamTagger.X_FreonSF6 = 225 * u.cm  - UBT_x_crop
-    c.UpstreamTagger.Z_FreonSF6_2 = 0.8 * u.cm
-    c.UpstreamTagger.Y_FreonSF6_2 = 0.5 * u.cm
-    c.UpstreamTagger.X_FreonSF6_2 = 0.5 * u.cm
-    c.UpstreamTagger.Z_FR4 = 0.15 * u.cm
-    c.UpstreamTagger.Y_FR4 = 111 * u.cm
-    c.UpstreamTagger.X_FR4 = 229 * u.cm  - UBT_x_crop
-    c.UpstreamTagger.Z_Aluminium = 1.1503 * u.cm
-    c.UpstreamTagger.Y_Aluminium = 111 * u.cm
-    c.UpstreamTagger.X_Aluminium = 233 * u.cm  - UBT_x_crop
-    c.UpstreamTagger.DZ_Aluminium = 0.1 * u.cm
-    c.UpstreamTagger.DY_Aluminium = 1 * u.cm
-    c.UpstreamTagger.DX_Aluminium = 0.2 * u.cm
-    c.UpstreamTagger.Z_Air = 1.1503 * u.cm
-    c.UpstreamTagger.Y_Air = 0 * u.cm
-    c.UpstreamTagger.X_Air = 2 * u.cm
-    c.UpstreamTagger.Z_Strip = 0.0003 * u.cm
-    c.UpstreamTagger.Y_Strip = 3.1 * u.cm
-    c.UpstreamTagger.X_Strip = 229 * u.cm  - UBT_x_crop
-    c.UpstreamTagger.X_Strip64 = 1.534 * u.cm
-    c.UpstreamTagger.Y_Strip64 = 111 * u.cm
+    c.UpstreamTagger.x_dim = 6.0 * u.m
+    c.UpstreamTagger.y_dim = 7.995 * u.m
+    c.UpstreamTagger.z_dim = 17.0024 * u.cm
     c.UpstreamTagger.Z_Position = c.tauMudet.zMudetC + (c.tauMudet.Ztot)/2 + 12.0*u.cm
+
+    # Last bit muon shield
+    c.lastBitMuonShield = AttrDict(z=0)
+    c.lastBitMuonShield.x_dim = 1.92 * u.m
+    c.lastBitMuonShield.y_dim = 3.596 * u.m
+    c.lastBitMuonShield.z_dim = 0.17 * u.m # one-interaction length
+    c.lastBitMuonShield.Z_Position = c.UpstreamTagger.Z_Position - 1.0 * u.m

@@ -3,15 +3,15 @@
 
 z: 0.0
 innerSupport: 0.8 # cm
-innerSupportMed: "Aluminum"
+innerSupportMed: "vacuum"
 outerSupport: 0.8 # cm
-outerSupportMed: "Aluminum"
+outerSupportMed: "vacuum"
 lidThickness: 0.0  # cm
 sensitiveThickness: 20  # cm
-sensitiveMed: "Scintillator"
+sensitiveMed: "vacuum"
 decayMed: "helium"
 rib: 1.5  # cm
-ribMed: "Aluminum"
+ribMed: "vacuum"
 xstartInner : 100.0 # cm
 ystartInner : 270.0 # cm
 xendInner : 400.0 # cm        #FocusLineX at z= target.z0 + 16.8m

@@ -2,6 +2,7 @@
 import os
 import sys
 import ROOT
+import math
 
 import shipunit as u
 import shipRoot_conf
@@ -67,10 +68,21 @@ group = parser.add_mutually_exclusive_group()
 parser.add_argument("--evtcalc", help="Use EventCalc", action="store_true")
 parser.add_argument("--Pythia6", dest="pythia6", help="Use Pythia6", required=False, action="store_true")
 parser.add_argument("--Pythia8", dest="pythia8", help="Use Pythia8", required=False, action="store_true")
+
+# Begin Particle Gun arguments
 parser.add_argument("--PG",      dest="pg",      help="Use Particle Gun", required=False, action="store_true")
+parser.add_argument("--multiplePG", dest="multiplePG", help="Multiple particle guns in a x-y plane at a fixed z or in a 3D volume", required=False, action="store_true")
+
 parser.add_argument("--pID",     dest="pID",     help="id of particle used by the gun (default=22)", required=False, default=22, type=int)
-parser.add_argument("--Estart", help="start of energy range of particle gun (default=10 GeV)", default=10, type=float)
-parser.add_argument("--Eend", help="end of energy range of particle gun (default=10 GeV)", default=10, type=float)
+parser.add_argument("--Estart", help="start of energy range of particle gun (default=1 GeV)", default=1, type=float)
+parser.add_argument("--Eend", help="end of energy range of particle gun (default=400 GeV)", default=400, type=float)
+parser.add_argument("--Vx", help="x position of particle gun (default=0 cm)", default=0, type=float)
+parser.add_argument("--Vy", help="y position of particle gun (default=0 cm)", default=0, type=float)
+parser.add_argument("--Vz", help="z position of particle gun (default=0 cm)", default=0, type=float)
+parser.add_argument("--Dx", help="size of the full uniform spread of PG xpos: (Vx - Dx/2, Vx + Dx/2) (default=10 cm)", default=10, type=float)
+parser.add_argument("--Dy", help="size of the full uniform spread of PG ypos: (Vy - Dy/2, Vy + Dy/2) (default=10 cm)", default=10, type=float)
+# End Particle Gun arguments
+
 parser.add_argument("-A",        dest="A",       help="b: signal from b, c: from c (default), bc: from Bc, or inclusive", required=False, default='c')
 parser.add_argument("--Genie",   dest="genie",   help="Genie for reading and processing neutrino interactions", required=False, action="store_true")
 parser.add_argument("--NuRadio", dest="nuradio", help="misuse GenieGenerator for neutrino radiography and geometry timing test", required=False, action="store_true")
@@ -143,6 +155,8 @@ parser.add_argument(
 
 parser.add_argument("--SND", dest="SND", help="Activate SND.", action='store_true')
 parser.add_argument("--noSND", dest="SND", help="Deactivate SND. NOOP, as it currently defaults to off.", action='store_false')
+
+parser.set_defaults(decayVolMed="dummy_SBT")
 
 options = parser.parse_args()
 
@@ -355,12 +369,27 @@ if simEngine == "EvtCalc":
 
 # -----Particle Gun-----------------------
 if simEngine == "PG":
-  myPgun = ROOT.FairBoxGenerator(options.pID,1)
-  myPgun.SetPRange(options.Estart,options.Eend)
-  myPgun.SetPhiRange(0, 360) # // Azimuth angle range [degree]
-  myPgun.SetXYZ(0.*u.cm, 0.*u.cm, 0.*u.cm)
-  myPgun.SetThetaRange(0,0) # // Polar angle in lab system range [degree]
-  primGen.AddGenerator(myPgun)
+ myPgun = ROOT.FairBoxGenerator(options.pID, 1)
+ myPgun.SetPRange(options.Estart, options.Eend)
+ #myPgun.SetPtRange(options.Estart, options.Eend)
+ myPgun.SetPhiRange(0, 360)  # // Azimuth angle range [degree]
+ myPgun.SetThetaRange(-90, 90)  # // Polar angle in lab system range [degree]
+ 
+ if options.multiplePG:
+      # multiple PG sources in the x-y plane; z is always the same!
+      myPgun.SetBoxXYZ(
+           (options.Vx - options.Dx / 2) * u.cm,
+           (options.Vy - options.Dy / 2) * u.cm,
+           (options.Vx + options.Dx / 2) * u.cm,
+           (options.Vy + options.Dy / 2) * u.cm,
+           options.Vz * u.cm,
+      )
+ else:
+      # point source
+      myPgun.SetXYZ(options.Vx * u.cm, options.Vy * u.cm, options.Vz * u.cm)
+
+ primGen.AddGenerator(myPgun)
+     
 # -----muon DIS Background------------------------
 if simEngine == "muonDIS":
  ut.checkFileExists(inputFile)

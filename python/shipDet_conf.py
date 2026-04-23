@@ -313,10 +313,11 @@ def configure(run, ship_geo):
 
     # -----Create geometry----------------------------------------------
     cave = ROOT.ShipCave("CAVE")
-    if ship_geo.tankDesign < 5:
-        cave.SetGeometryFileName("cave.geo")
-    else:
-        cave.SetGeometryFileName("caveWithAir.geo")
+    cave.SetGeometryFileName("caveVaccum.geo")
+    #if ship_geo.tankDesign < 5:
+    #    cave.SetGeometryFileName("cave.geo")
+    #else:
+    #    cave.SetGeometryFileName("caveWithAir.geo")
     detectorList.append(cave)
 
     if ship_geo.muShieldDesign in [
@@ -442,7 +443,7 @@ def configure(run, ship_geo):
     detectorList.append(magnet)
 
     fairship = ROOT.gSystem.Getenv("FAIRSHIP")
-
+    
     if ship_geo.DecayVolumeMedium == "helium":
         configure_veto(
             fairship + "/geometry/veto_config_helium.yaml"
@@ -451,7 +452,7 @@ def configure(run, ship_geo):
         configure_veto(
             fairship + "/geometry/veto_config_vacuums.yaml"
         )  # put conditions for the design
-
+        
     #For SND
     if ship_geo.SND:  # kept only one old design
         #This parameters are taken from the top geometry_config
@@ -599,42 +600,10 @@ def configure(run, ship_geo):
     detectorList.append(Muon)
 
     upstreamTagger = ROOT.UpstreamTagger("UpstreamTagger", ROOT.kTRUE)
+    upstreamTagger.SetXdim(ship_geo.UpstreamTagger.x_dim)
+    upstreamTagger.SetYdim(ship_geo.UpstreamTagger.y_dim)
+    upstreamTagger.SetZdim(ship_geo.UpstreamTagger.z_dim)
     upstreamTagger.SetZposition(ship_geo.UpstreamTagger.Z_Position)
-    upstreamTagger.SetSizeX_Glass(ship_geo.UpstreamTagger.X_Glass)
-    upstreamTagger.SetSizeY_Glass(ship_geo.UpstreamTagger.Y_Glass)
-    upstreamTagger.SetSizeZ_Glass(ship_geo.UpstreamTagger.Z_Glass)
-    upstreamTagger.SetSizeX_Glass_Border(ship_geo.UpstreamTagger.X_Glass_Border)
-    upstreamTagger.SetSizeY_Glass_Border(ship_geo.UpstreamTagger.Y_Glass_Border)
-    upstreamTagger.SetSizeZ_Glass_Border(ship_geo.UpstreamTagger.Z_Glass_Border)
-    upstreamTagger.SetSizeX_PMMA(ship_geo.UpstreamTagger.X_PMMA)
-    upstreamTagger.SetSizeY_PMMA(ship_geo.UpstreamTagger.Y_PMMA)
-    upstreamTagger.SetSizeZ_PMMA(ship_geo.UpstreamTagger.Z_PMMA)
-    upstreamTagger.SetSizeDX_PMMA(ship_geo.UpstreamTagger.DX_PMMA)
-    upstreamTagger.SetSizeDY_PMMA(ship_geo.UpstreamTagger.DY_PMMA)
-    upstreamTagger.SetSizeDZ_PMMA(ship_geo.UpstreamTagger.DZ_PMMA)
-    upstreamTagger.SetSizeX_FreonSF6(ship_geo.UpstreamTagger.X_FreonSF6)
-    upstreamTagger.SetSizeY_FreonSF6(ship_geo.UpstreamTagger.Y_FreonSF6)
-    upstreamTagger.SetSizeZ_FreonSF6(ship_geo.UpstreamTagger.Z_FreonSF6)
-    upstreamTagger.SetSizeX_FreonSF6_2(ship_geo.UpstreamTagger.X_FreonSF6_2)
-    upstreamTagger.SetSizeY_FreonSF6_2(ship_geo.UpstreamTagger.Y_FreonSF6_2)
-    upstreamTagger.SetSizeZ_FreonSF6_2(ship_geo.UpstreamTagger.Z_FreonSF6_2)
-    upstreamTagger.SetSizeX_FR4(ship_geo.UpstreamTagger.X_FR4)
-    upstreamTagger.SetSizeY_FR4(ship_geo.UpstreamTagger.Y_FR4)
-    upstreamTagger.SetSizeZ_FR4(ship_geo.UpstreamTagger.Z_FR4)
-    upstreamTagger.SetSizeX_Al(ship_geo.UpstreamTagger.X_Aluminium)
-    upstreamTagger.SetSizeY_Al(ship_geo.UpstreamTagger.Y_Aluminium)
-    upstreamTagger.SetSizeZ_Al(ship_geo.UpstreamTagger.Z_Aluminium)
-    upstreamTagger.SetSizeDX_Al(ship_geo.UpstreamTagger.DX_Aluminium)
-    upstreamTagger.SetSizeDY_Al(ship_geo.UpstreamTagger.DY_Aluminium)
-    upstreamTagger.SetSizeDZ_Al(ship_geo.UpstreamTagger.DZ_Aluminium)
-    upstreamTagger.SetSizeX_Air(ship_geo.UpstreamTagger.X_Air)
-    upstreamTagger.SetSizeY_Air(ship_geo.UpstreamTagger.Y_Air)
-    upstreamTagger.SetSizeZ_Air(ship_geo.UpstreamTagger.Z_Air)
-    upstreamTagger.SetSizeX_Strip(ship_geo.UpstreamTagger.X_Strip)
-    upstreamTagger.SetSizeY_Strip(ship_geo.UpstreamTagger.Y_Strip)
-    upstreamTagger.SetSizeX_Strip64(ship_geo.UpstreamTagger.X_Strip64)
-    upstreamTagger.SetSizeY_Strip64(ship_geo.UpstreamTagger.Y_Strip64)
-    upstreamTagger.SetSizeZ_Strip(ship_geo.UpstreamTagger.Z_Strip)
     detectorList.append(upstreamTagger)
 
     timeDet = ROOT.TimeDet("TimeDet", ROOT.kTRUE)
@@ -645,6 +614,13 @@ def configure(run, ship_geo):
     timeDet.SetSizeY(2 * ship_geo.TimeDet.DY)
     detectorList.append(timeDet)
 
+    lastBitMuonShield = ROOT.lastBitMuonShield("lastBitMuonShield", ROOT.kTRUE)
+    lastBitMuonShield.SetXdim(ship_geo.lastBitMuonShield.x_dim)
+    lastBitMuonShield.SetYdim(ship_geo.lastBitMuonShield.y_dim)
+    lastBitMuonShield.SetZdim(ship_geo.lastBitMuonShield.z_dim)
+    lastBitMuonShield.SetZposition(ship_geo.lastBitMuonShield.Z_Position)
+    detectorList.append(lastBitMuonShield)
+    
     # -----   Magnetic field   -------------------------------------------
     if not hasattr(ship_geo.Bfield, "fieldMap"):
         if ship_geo.strawDesign == 4 or ship_geo.strawDesign == 10:
@@ -667,7 +643,7 @@ def configure(run, ship_geo):
 
     exclusionList = []
     # exclusionList = ["Muon","Ecal","Hcal","Strawtubes","TargetTrackers","NuTauTarget","HighPrecisionTrackers",\
-    #                 "Veto","Magnet","MuonShield","TargetStation","NuTauMudet","EmuMagnet", "TimeDet", "UpstreamTagger"]
+    #                 "Veto","Magnet","MuonShield","TargetStation","NuTauMudet","EmuMagnet", "TimeDet", "UpstreamTagger", "lastBitMuonShield"]
 
     for x in detectorList:
         if x.GetName() in exclusionList:

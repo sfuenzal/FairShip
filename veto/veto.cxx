@@ -534,6 +534,7 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
         vLongitRibX.at(i) = GeoSideObj(
             name, dZ, ribThick, liscThick1, ribThick, liscThick2, z1_x2 - z1_x1, z1_y2 - z1_y1, ribColor, supportMedIn);
 
+	vLongitRibX.at(i) -> SetVisibility(kFALSE);
         z1_x1 = z1_x1 - ribThick;
         z1_x2 = z1_x2 - ribThick;
     }
@@ -553,6 +554,7 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
         name.Form("vLongitRibY_%s_phi%d", blockName.Data(), makeId(0, z1_x1, z1_y1));
         vLongitRibY.at(i) = GeoSideObj(
             name, dZ, liscThick1, ribThick, liscThick2, ribThick, z1_x2 - z1_x1, z1_y2 - z1_y1, ribColor, supportMedIn);
+	vLongitRibY.at(i) -> SetVisibility(kFALSE);
         z1_y1 = z1_y1 - ribThick;
         z1_y2 = z1_y2 - ribThick;
     }
@@ -566,6 +568,8 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
     TGeoVolumeAssembly* CornerRib_R =
         GeoCornerRib(name, ribThick, liscThick1, liscThick2, dZ, slY, slX, ribColor, supportMedIn);
 
+    
+    
     for (double zi = z1; zi < z2; zi += cell_thickness_z) {
 
         int Zlayer = (int)zi / cell_thickness_z + 1;
@@ -582,7 +586,8 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
                                              wy(zi + ribThick) + 2 * wallThick,
                                              ribColor,
                                              supportMedIn);
-        tZ = Zshift - wz / 2 + zi - z1 + ribThick / 2;
+	TVR -> SetVisibility(kFALSE);
+	tZ = Zshift - wz / 2 + zi - z1 + ribThick / 2;
 
         tVerticalRib->AddNode(TVR, 0, new TGeoTranslation(0, 0, tZ));
 
@@ -637,6 +642,7 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
                                              kMagenta - 10,
                                              vetoMed,
                                              true);
+	LiSc_S4 -> SetVisibility(kFALSE);
         ttLiSc->AddNode(LiSc_S4,
                         liscId("LiSc_S4", blockNr, Zlayer, 0, 1),
                         new TGeoCombiTrans(zi_x1, -(zi_y1 - zi_y1_Step), tZ, new TGeoRotation("r", 0, 0, 0)));
@@ -658,6 +664,9 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
                                              kMagenta - 10,
                                              vetoMed,
                                              true);
+	
+	LiSc_S6 -> SetVisibility(kFALSE);
+	
         ttLiSc->AddNode(LiSc_S6,
                         liscId("LiSc_S6", blockNr, Zlayer, ny, 1),
                         new TGeoCombiTrans(zi_x1, (zi_y1 - zi_y1_Step), tZ, new TGeoRotation("r", 0, 0, 0)));
@@ -692,6 +701,7 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
                                                kMagenta - 10,
                                                vetoMed,
                                                true);
+		LiScY -> SetVisibility(kFALSE);
                 ttLiSc->AddNode(LiScY,
                                 liscId("LiScY", blockNr, Zlayer, i, 1),
                                 new TGeoCombiTrans(zi_x1, zi_y1, tZ, new TGeoRotation("r", 0, 0, 0)));
@@ -725,6 +735,7 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
                                              kMagenta - 10,
                                              vetoMed,
                                              true);
+	LiSc_S3 -> SetVisibility(kFALSE);
         ttLiSc->AddNode(LiSc_S3,
                         liscId("LiSc_S3", blockNr, Zlayer, 0, 1),
                         new TGeoCombiTrans(-(zi_x1 - zi_x1_Step), zi_y1, tZ, new TGeoRotation("r", 0, 0, 0)));
@@ -747,6 +758,7 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
                                              kMagenta - 10,
                                              vetoMed,
                                              true);
+	LiSc_S5 -> SetVisibility(kFALSE);
         ttLiSc->AddNode(LiSc_S5,
                         liscId("LiSc_S5", blockNr, Zlayer, nx, 1),
                         new TGeoCombiTrans((zi_x1 - zi_x1_Step), zi_y1, tZ, new TGeoRotation("r", 0, 0, 0)));
@@ -780,6 +792,7 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
                                                kMagenta - 10,
                                                vetoMed,
                                                true);
+		LiScX -> SetVisibility(kFALSE);
                 ttLiSc->AddNode(LiScX,
                                 liscId("LiScX", blockNr, Zlayer, i, 1),
                                 new TGeoCombiTrans(zi_x1, zi_y1, tZ, new TGeoRotation("r", 0, 0, 0)));
@@ -1051,6 +1064,7 @@ void veto::ConstructGeometry()
 
     TGeoVolume* top = gGeoManager->GetTopVolume();
 
+    InitMedium("vacuum");
     InitMedium("vacuums");
     InitMedium("Aluminum");
     InitMedium("helium");
@@ -1063,7 +1077,10 @@ void veto::ConstructGeometry()
     supportMedIn = gGeoManager->GetMedium(supportMedIn_name);       //! medium of support structure, iron, balloon
     supportMedOut = gGeoManager->GetMedium(supportMedOut_name);     //! medium of support structure, aluminium, balloon
     decayVolumeMed = gGeoManager->GetMedium(decayVolumeMed_name);   // decay volume, air/helium/vacuum
-    LOG(INFO) << "veto: Decay Volume medium set as: " <<  decayVolumeMed_name;
+    LOG(INFO) << "veto: Veto medium set as: " << vetoMed_name;
+    LOG(INFO) << "veto: Innet Support medium set as: " << supportMedIn_name;
+    LOG(INFO) << "veto: Outter Support medium set as: " << supportMedOut_name;
+    LOG(INFO) << "veto: Decay Volume medium set as: " << decayVolumeMed_name;
     TGeoVolume* tDecayVol = new TGeoVolumeAssembly("DecayVolume");
 
     TGeoVolume* seg = MakeSegments();

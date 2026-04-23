@@ -30,6 +30,12 @@ parser.add_argument(
     help="path to muon background files",
     default="/eos/experiment/ship/simulation/bkg/MuonBack_2024helium/8070735",
 )
+parser.add_argument(
+    "-g",
+    "--generator",
+    help="type of generator, options are: MuonBack or PG",
+    default="MuonBack",
+)
 args = parser.parse_args()
 
 if args.testing_code:
@@ -65,6 +71,11 @@ output_tree.Branch("muon_vetoPoints", muon_vetoPoints)
 
 muon_UpstreamTaggerPoints = r.TClonesArray("UpstreamTaggerPoint")
 output_tree.Branch("muon_UpstreamTaggerPoints", muon_UpstreamTaggerPoints)
+
+if args.generator == "MuonBack":
+    reco_file_name = "ship.conical.MuonBack-TGeant4.root"
+elif args.generator == "PG":
+    reco_file_name = "ship.conical.PG_13-TGeant4_rec.root"
 
 h = {}
 h["PvPt_muon"] = r.TH2F(
@@ -123,7 +134,8 @@ def printMCTrack(n, MCTrack):
                 mcp.GetStartY() / u.m,
                 mcp.GetStartZ() / u.m,
                 mcp.GetMotherId(),
-                mcp.GetWeight(),
+                #mcp.GetWeight(),
+                1.0,
                 mcp.GetProcName().Data(),
             )
         )
@@ -141,7 +153,8 @@ def printMCTrack(n, MCTrack):
                 mcp.GetStartY() / u.m,
                 mcp.GetStartZ() / u.m,
                 mcp.GetMotherId(),
-                mcp.GetWeight(),
+                #mcp.GetWeight(),
+                1.0,
                 mcp.GetProcName().Data(),
             )
         )
@@ -227,7 +240,7 @@ for inputFolder in os.listdir(path):
     f = None
     try:
         f = r.TFile.Open(
-            os.path.join(path, inputFolder, "ship.conical.MuonBack-TGeant4.root"),
+            os.path.join(path, inputFolder, reco_file_name),
             "read",
         )
         tree = f.cbmsim
@@ -255,6 +268,7 @@ for inputFolder in os.listdir(path):
             P = r.TMath.Sqrt(hit.GetPx() ** 2 + hit.GetPy() ** 2 + hit.GetPz() ** 2)
 
             if 1000 < detID < 999999 and abs(pid) == 13 and P > P_threshold / u.GeV:
+            #if detID == 0 and abs(pid) == 13 and P > P_threshold / u.GeV:
                 particle_name = pdg.GetParticle(hit.PdgCode()).GetName()
                 if track_id not in muon_ids:
                     muon_ids.append(track_id)
@@ -314,6 +328,7 @@ for inputFolder in os.listdir(path):
 
                 if (
                     1000 < detID < 999999
+                    #detID == 0
                     and track_id == muon_
                     and P > P_threshold / u.GeV
                 ):
@@ -326,8 +341,9 @@ for inputFolder in os.listdir(path):
 
                     index += 1
 
-                    weight = event.MCTrack[track_id].GetWeight()
-
+                    #weight = event.MCTrack[track_id].GetWeight()
+                    weight = 1.0
+                    
                     if (
                         track_id not in processed_events[global_event_nr]
                     ):  # only save the info of first SBT hit
