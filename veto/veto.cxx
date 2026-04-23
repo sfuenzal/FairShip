@@ -201,7 +201,8 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
                     Double_t z1,
                     Double_t z2,
                     Double_t Zshift,
-                    Double_t wallThick) {
+                    Double_t wallThick,
+		    Bool_t sensitiveVeto) {
   TString blockName = "block";
   blockName += blockNr;
   
@@ -219,7 +220,8 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
 				       wy(z1),
 				       wy(z2),
 				       ribColor,
-				       vetoMed);
+				       vetoMed,
+				       sensitiveVeto);
   
   tInnerWall->AddNode(TIW, 0, new TGeoTranslation(0, 0, Zshift));
 
@@ -232,10 +234,11 @@ void veto::AddBlock(TGeoVolumeAssembly* tInnerWall,
 				 wx(z2),
 				 wy(z1),
 				 wy(z2),
-				 1,
-				 decayVolumeMed);
+				 3,
+				 decayVolumeMed,
+				 sensitiveVeto);
 
-  TDV->SetVisibility(kFALSE);
+  //TDV->SetVisibility(kFALSE);
   tDecayVacuum->AddNode(TDV, 0, new TGeoTranslation(0, 0, Zshift));
 }
 
@@ -247,8 +250,9 @@ TGeoVolume* veto::MakeSegments() {
   
   TString nameDecayVacuum = "DecayVacuum";
   TGeoVolumeAssembly* tDecayVacuum = new TGeoVolumeAssembly(nameDecayVacuum);
-
+  
   Double_t wallThick = f_VetoThickness;
+  Double_t sensitiveVeto = f_sensitiveVeto;
   
   Double_t z1 = 0 * m;
   Double_t z2 = 50.0 * m;
@@ -262,11 +266,12 @@ TGeoVolume* veto::MakeSegments() {
 	   z1,
 	   z2,
 	   Zshift,
-	   wallThick);  
+	   wallThick,
+	   sensitiveVeto);  
   
   tTankVol->AddNode(tInnerWall, 0, new TGeoTranslation(0, 0, 0));
   tTankVol->AddNode(tDecayVacuum, 0, new TGeoTranslation(0, 0, 0));
-    
+  
   return tTankVol;
 }
 
@@ -405,8 +410,9 @@ void veto::ConstructGeometry() {
   InitMedium("helium");
   
   gGeoManager->SetNsegments(100);
-  vetoMed = gGeoManager->GetMedium(vetoMed_name);   //! medium of veto counter, liquid or plastic scintillator
-  decayVolumeMed = gGeoManager->GetMedium(decayVolumeMed_name);   // decay volume, air/helium/vacuum
+  
+  vetoMed = gGeoManager->GetMedium(vetoMed_name);   //! Veto counter medium: vacuum
+  decayVolumeMed = gGeoManager->GetMedium(decayVolumeMed_name);   //! Decay volume medium: air/helium/vacuum
 
   LOG(INFO) << "veto: Veto medium set as: " <<  vetoMed_name;
   LOG(INFO) << "veto: Decay Volume medium set as: " <<  decayVolumeMed_name;

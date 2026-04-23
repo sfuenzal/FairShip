@@ -1,0 +1,13 @@
+#Dummy Configuration of Decay Vessel for FairShip (Naples Design)
+
+
+z: 0.0
+sensitiveThickness: 0.01  # cm
+sensitiveMed: "vacuum"
+decayMed: "helium"
+sensitiveVeto: True
+xstartInner : 100.0 # cm
+ystartInner : 270.0 # cm
+xendInner : 400.0 # cm
+yendInner : 600.0 # cm
+z0: -2478.0 # cm Decay Vessel Start

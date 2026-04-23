@@ -78,6 +78,10 @@ public:
     decayVolumeMed_name = c;
   }
 
+  void MakeVetoSensitive(Bool_t sensitiveVeto) {
+    f_sensitiveVeto = sensitiveVeto;
+  }
+ 
   /*
    *      This method is an example of how to add your own point
    *       of type vetoPoint to the clones array
@@ -107,7 +111,7 @@ public:
   virtual void PostTrack() { ; }
   virtual void PreTrack();
   virtual void BeginEvent() { ; }
-  
+
 private:
   /*
    * Track information to be stored until the track leaves the active volume.
@@ -128,13 +132,16 @@ private:
   Float_t fELoss;
   
   Bool_t fFastMuon, fFollowMuon;
-
+  
   //! thickness of veto detector
   Double_t f_VetoThickness;
   //! medium of veto counter (default: vacuum) 
   TString vetoMed_name;
   //! medium of decay volume (default: helium)
   TString decayVolumeMed_name;
+
+  //! Make sensitive veto
+  Bool_t f_sensitiveVeto;
   
   TGeoMedium* vetoMed;
   TGeoMedium* decayVolumeMed;
@@ -150,7 +157,7 @@ private:
   
   //! z Position of the Decay Volume start in the global coordinate system
   Float_t zStartDecayVol;
-  
+
   /** container for data points */
   TClonesArray* fvetoPointCollection;
   
@@ -196,7 +203,8 @@ private:
 		double z1,
 		double z2,
 		double Zshift,
-		double wallThick);
+		double wallThick,
+		bool sensitive);
   
   //! slope along the width (x)
   double wx(double z);

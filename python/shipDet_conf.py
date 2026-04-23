@@ -262,6 +262,8 @@ def configure_veto(yaml_file):
         veto_geo.decayMed,
     )
 
+    Veto.MakeVetoSensitive(veto_geo.sensitiveVeto)
+
     detectorList.append(Veto)
 
 def configure(run, ship_geo):
@@ -436,17 +438,14 @@ def configure(run, ship_geo):
 
     fairship = ROOT.gSystem.Getenv("FAIRSHIP")
 
-    if ship_geo.DecayVolumeMedium == "helium":
+    if ship_geo.DecayVolumeMedium == "dummy_no_SBT":
         configure_veto(
-            fairship + "/geometry/veto_config_helium.yaml"
+            fairship + "/geometry/veto_config_dummy_SBT_noSensitive.yaml"
         )  # put conditions for the design
-    if ship_geo.DecayVolumeMedium == "vacuums":
+
+    if ship_geo.DecayVolumeMedium == "dummy_SBT":
         configure_veto(
-            fairship + "/geometry/veto_config_vacuums.yaml"
-        )  # put conditions for the design
-    if ship_geo.DecayVolumeMedium == "dummy":
-        configure_veto(
-            fairship + "/geometry/veto_config_dummy.yaml"
+            fairship + "/geometry/veto_config_dummy_SBT_sensitive.yaml"
         )  # put conditions for the design
 
     #For SND
@@ -639,7 +638,7 @@ def configure(run, ship_geo):
 
     exclusionList = []
     # exclusionList = ["Muon","Ecal","Hcal","Strawtubes","TargetTrackers","NuTauTarget","HighPrecisionTrackers",\
-    #                 "Veto","Magnet","MuonShield","TargetStation","NuTauMudet","EmuMagnet", "TimeDet", "UpstreamTagger"]
+    #                 "Veto","Magnet","MuonShield","TargetStation","NuTauMudet","EmuMagnet", "TimeDet", "UpstreamTagger", "lastBitMuonShield"]
 
     for x in detectorList:
         if x.GetName() in exclusionList:

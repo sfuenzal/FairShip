@@ -69,37 +69,10 @@ TGeoNode* vetoHit::GetNode()
 {
     TGeoNode* node;
     TGeoNavigator* nav = gGeoManager->GetCurrentNavigator();
-    TString path = "cave/DecayVolume_1/T2_1/VetoLiSc_0/";
+    //TString path = "cave/DecayVolume_1/T2_1/VetoLiSc_0/";
+    TString path = "cave/DecayVolume_1/T2_1/VetoInnerWall_0/";
     // id = ShapeType*100000 + blockNr*10000 + Zlayer*100 + number*10 + position;
-
-    Int_t ShapeType = fDetectorID / 100000;
-    Int_t blockNr = (fDetectorID % 100000) / 10000;
-    Int_t Zlayer = (fDetectorID % 10000) / 100;
-    Int_t number = (fDetectorID % 100) / 10;
-    // Int_t position    = (fDetectorID % 10);
-
-    if (ShapeType == 1)
-        path += "LiScX_";
-    else if (ShapeType == 2)
-        path += "LiScY_";
-    else if (ShapeType == 3)
-        path += "LiSc_S3_";
-    else if (ShapeType == 4)
-        path += "LiSc_S4_";
-    else if (ShapeType == 5)
-        path += "LiSc_S5_";
-    else if (ShapeType == 6)
-        path += "LiSc_S6_";
-
-    path += ShapeType;
-    path += blockNr;
-    if (Zlayer < 10)
-        path += "0";
-    path += Zlayer;
-    path += number;
-    path += "0_";
-    path += fDetectorID;
-
+    
     nav->cd(path);
     node = nav->GetCurrentNode();
     return node;
