@@ -134,7 +134,8 @@ def printMCTrack(n, MCTrack):
                 mcp.GetStartY() / u.m,
                 mcp.GetStartZ() / u.m,
                 mcp.GetMotherId(),
-                mcp.GetWeight(),
+                #mcp.GetWeight(),
+                1.0,
                 mcp.GetProcName().Data(),
             )
         )
@@ -152,7 +153,8 @@ def printMCTrack(n, MCTrack):
                 mcp.GetStartY() / u.m,
                 mcp.GetStartZ() / u.m,
                 mcp.GetMotherId(),
-                mcp.GetWeight(),
+                #mcp.GetWeight(),
+                1.0,
                 mcp.GetProcName().Data(),
             )
         )
@@ -339,8 +341,9 @@ for inputFolder in os.listdir(path):
 
                     index += 1
 
-                    weight = event.MCTrack[track_id].GetWeight()
-
+                    #weight = event.MCTrack[track_id].GetWeight()
+                    weight = 1.0
+                    
                     if (
                         track_id not in processed_events[global_event_nr]
                     ):  # only save the info of first SBT hit

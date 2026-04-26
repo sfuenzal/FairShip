@@ -131,7 +131,8 @@ def printMCTrack(n, MCTrack):
                 mcp.GetStartY() / u.m,
                 mcp.GetStartZ() / u.m,
                 mcp.GetMotherId(),
-                mcp.GetWeight(),
+                #mcp.GetWeight(),
+                1.0,
                 mcp.GetProcName().Data(),
             )
         )
@@ -149,7 +150,8 @@ def printMCTrack(n, MCTrack):
                 mcp.GetStartY() / u.m,
                 mcp.GetStartZ() / u.m,
                 mcp.GetMotherId(),
-                mcp.GetWeight(),
+                #mcp.GetWeight(),
+                1.0,
                 mcp.GetProcName().Data(),
             )
         )
@@ -354,7 +356,8 @@ for inputFolder in os.listdir(path):
 
                         nmu[particle_name] += 1
 
-                        weight = event.MCTrack[track_id].GetWeight()
+                        #weight = event.MCTrack[track_id].GetWeight()
+                        weight = 1.0
 
                         # Fill imuondata
                         imuondata[0] = float(hit.PdgCode())
