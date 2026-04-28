@@ -95,8 +95,10 @@ $(document).ready(function(){initNavTree('MuDISGenerator_8cxx.html',''); initRes
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &quot;<a class="el" href="MuDISGenerator_8h_source.html">MuDISGenerator.h</a>&quot;</code><br />
+<code>#include &lt;cmath&gt;</code><br />
 <code>#include &quot;FairLogger.h&quot;</code><br />
 <code>#include &quot;FairPrimaryGenerator.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="MeanMaterialBudget_8h_source.html">MeanMaterialBudget.h</a>&quot;</code><br />
 <code>#include &quot;TFile.h&quot;</code><br />
 <code>#include &quot;TGeoCompositeShape.h&quot;</code><br />
 <code>#include &quot;TGeoEltu.h&quot;</code><br />
@@ -108,57 +110,69 @@ $(document).ready(function(){initNavTree('MuDISGenerator_8cxx.html',''); initRes
 <code>#include &quot;TRandom.h&quot;</code><br />
 <code>#include &quot;TSystem.h&quot;</code><br />
 <code>#include &quot;TVectorD.h&quot;</code><br />
-<code>#include &lt;math.h&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for MuDISGenerator.cxx:</div>
 <div class="dyncontent">
 <div class="center"><img src="MuDISGenerator_8cxx__incl.png" border="0" usemap="#ashipgen_2MuDISGenerator_8cxx" alt=""/></div>
 <map name="ashipgen_2MuDISGenerator_8cxx" id="ashipgen_2MuDISGenerator_8cxx">
-<area shape="rect" title=" " alt="" coords="1199,5,1410,31"/>
-<area shape="rect" href="MuDISGenerator_8h.html" title=" " alt="" coords="420,79,560,104"/>
-<area shape="poly" title=" " alt="" coords="1199,29,919,50,580,81,574,82,573,77,579,76,918,45,1199,24"/>
-<area shape="rect" title=" " alt="" coords="5,152,105,177"/>
-<area shape="poly" title=" " alt="" coords="1199,23,1045,28,847,37,628,55,409,81,326,96,243,115,107,151,106,146,242,110,325,91,408,76,628,49,847,32,1045,22,1199,18"/>
-<area shape="rect" title=" " alt="" coords="795,152,873,177"/>
-<area shape="poly" title=" " alt="" coords="1199,24,1038,28,858,38,705,55,654,67,627,80,622,91,626,102,683,121,782,147,781,153,681,126,623,106,617,91,623,77,652,62,705,50,858,33,1038,23,1199,18"/>
-<area shape="rect" title=" " alt="" coords="636,79,808,104"/>
-<area shape="poly" title=" " alt="" coords="1211,33,822,81,821,75,1211,28"/>
-<area shape="rect" title=" " alt="" coords="832,79,897,104"/>
-<area shape="poly" title=" " alt="" coords="1213,33,1075,53,911,81,910,76,1074,48,1212,28"/>
-<area shape="rect" title=" " alt="" coords="922,79,1101,104"/>
-<area shape="poly" title=" " alt="" coords="1258,33,1073,78,1071,73,1257,28"/>
-<area shape="rect" title=" " alt="" coords="1125,79,1218,104"/>
-<area shape="poly" title=" " alt="" coords="1284,33,1206,74,1204,70,1282,28"/>
-<area shape="rect" title=" " alt="" coords="1243,79,1367,104"/>
-<area shape="poly" title=" " alt="" coords="1307,31,1307,65,1302,65,1302,31"/>
-<area shape="rect" title=" " alt="" coords="1391,79,1493,104"/>
-<area shape="poly" title=" " alt="" coords="1328,28,1409,70,1406,75,1326,33"/>
-<area shape="rect" title=" " alt="" coords="1518,79,1635,104"/>
-<area shape="poly" title=" " alt="" coords="1349,28,1520,73,1519,78,1348,33"/>
-<area shape="rect" title=" " alt="" coords="1659,79,1734,104"/>
-<area shape="poly" title=" " alt="" coords="1378,28,1646,76,1645,81,1377,33"/>
-<area shape="rect" title=" " alt="" coords="1758,79,1854,104"/>
-<area shape="poly" title=" " alt="" coords="1400,28,1745,76,1744,81,1400,33"/>
-<area shape="rect" title=" " alt="" coords="1878,79,1969,104"/>
-<area shape="poly" title=" " alt="" coords="1410,25,1616,45,1865,76,1864,81,1616,50,1410,30"/>
-<area shape="rect" title=" " alt="" coords="1993,79,2086,104"/>
-<area shape="poly" title=" " alt="" coords="1411,23,1665,41,1821,57,1979,76,1979,81,1820,62,1665,47,1410,28"/>
-<area shape="rect" title=" " alt="" coords="2111,79,2179,104"/>
-<area shape="poly" title=" " alt="" coords="1411,19,1715,35,1905,51,2098,76,2097,82,1904,57,1715,40,1410,24"/>
-<area shape="rect" title=" " alt="" coords="129,152,251,177"/>
-<area shape="poly" title=" " alt="" coords="442,107,252,151,251,146,441,101"/>
-<area shape="poly" title=" " alt="" coords="420,106,119,154,118,149,419,101"/>
-<area shape="rect" title=" " alt="" coords="275,152,393,177"/>
-<area shape="poly" title=" " alt="" coords="466,106,373,149,371,144,464,102"/>
-<area shape="rect" title=" " alt="" coords="417,152,475,177"/>
-<area shape="poly" title=" " alt="" coords="485,106,463,142,458,139,480,103"/>
-<area shape="poly" title=" " alt="" coords="548,101,781,149,780,154,547,107"/>
-<area shape="rect" title=" " alt="" coords="499,152,569,177"/>
-<area shape="poly" title=" " alt="" coords="500,103,522,139,517,142,495,106"/>
-<area shape="rect" title=" " alt="" coords="593,152,683,177"/>
-<area shape="poly" title=" " alt="" coords="515,102,603,144,600,148,513,106"/>
-<area shape="rect" title=" " alt="" coords="708,152,771,177"/>
-<area shape="poly" title=" " alt="" coords="531,101,695,148,694,153,529,107"/>
+<area shape="rect" title=" " alt="" coords="1402,5,1613,31"/>
+<area shape="rect" href="MuDISGenerator_8h.html" title=" " alt="" coords="341,79,481,104"/>
+<area shape="poly" title=" " alt="" coords="1402,29,495,87,495,82,1402,23"/>
+<area shape="rect" title=" " alt="" coords="5,225,105,251"/>
+<area shape="poly" title=" " alt="" coords="1402,24,849,43,548,59,424,70,329,81,246,88,178,89,148,94,120,105,91,124,63,154,55,167,52,182,53,212,47,212,47,181,50,165,59,150,88,120,117,101,147,89,178,84,246,82,328,76,423,64,548,54,848,38,1402,19"/>
+<area shape="rect" title=" " alt="" coords="741,225,804,251"/>
+<area shape="poly" title=" " alt="" coords="1402,26,1247,33,1074,44,926,60,875,70,846,81,835,98,818,134,785,214,780,212,813,132,830,96,843,77,873,65,925,55,1074,39,1247,28,1402,20"/>
+<area shape="rect" title=" " alt="" coords="701,152,780,177"/>
+<area shape="poly" title=" " alt="" coords="1402,26,1051,45,889,61,833,71,801,81,785,93,772,108,753,141,748,138,767,105,781,89,798,76,832,66,889,56,1050,40,1402,21"/>
+<area shape="rect" title=" " alt="" coords="856,79,1028,104"/>
+<area shape="poly" title=" " alt="" coords="1417,33,1042,80,1041,75,1416,28"/>
+<area shape="rect" href="MeanMaterialBudget_8h.html" title=" " alt="" coords="1053,79,1223,104"/>
+<area shape="poly" title=" " alt="" coords="1448,33,1212,79,1211,73,1447,28"/>
+<area shape="rect" title=" " alt="" coords="1248,79,1313,104"/>
+<area shape="poly" title=" " alt="" coords="1472,33,1328,78,1326,73,1470,28"/>
+<area shape="rect" title=" " alt="" coords="1338,79,1517,104"/>
+<area shape="poly" title=" " alt="" coords="1496,33,1452,72,1449,68,1493,29"/>
+<area shape="rect" title=" " alt="" coords="1541,79,1634,104"/>
+<area shape="poly" title=" " alt="" coords="1522,29,1566,68,1562,72,1518,33"/>
+<area shape="rect" title=" " alt="" coords="1659,79,1783,104"/>
+<area shape="poly" title=" " alt="" coords="1542,28,1674,72,1672,77,1541,33"/>
+<area shape="rect" title=" " alt="" coords="1807,79,1909,104"/>
+<area shape="poly" title=" " alt="" coords="1564,28,1794,74,1793,80,1563,33"/>
+<area shape="rect" title=" " alt="" coords="1934,79,2051,104"/>
+<area shape="poly" title=" " alt="" coords="1590,28,1921,76,1920,81,1589,33"/>
+<area shape="rect" title=" " alt="" coords="2075,79,2150,104"/>
+<area shape="poly" title=" " alt="" coords="1613,24,1817,43,2062,76,2061,81,1817,48,1613,29"/>
+<area shape="rect" title=" " alt="" coords="2174,79,2270,104"/>
+<area shape="poly" title=" " alt="" coords="1613,23,1859,42,2160,76,2160,81,1859,48,1613,28"/>
+<area shape="rect" title=" " alt="" coords="2294,79,2385,104"/>
+<area shape="poly" title=" " alt="" coords="1613,21,1910,38,2093,54,2280,76,2280,81,2092,60,1909,44,1613,26"/>
+<area shape="rect" title=" " alt="" coords="2409,79,2502,104"/>
+<area shape="poly" title=" " alt="" coords="1613,19,1957,36,2174,52,2396,76,2395,81,2173,58,1957,41,1613,25"/>
+<area shape="poly" title=" " alt="" coords="341,99,270,106,193,117,126,133,100,143,82,154,72,166,65,181,59,212,54,211,60,179,68,163,79,150,98,138,124,128,192,112,269,101,341,94"/>
+<area shape="rect" href="Generator_8h.html" title=" " alt="" coords="495,152,594,177"/>
+<area shape="poly" title=" " alt="" coords="434,102,512,143,510,148,432,106"/>
+<area shape="rect" title=" " alt="" coords="283,225,345,251"/>
+<area shape="poly" title=" " alt="" coords="393,106,366,127,342,153,328,183,320,212,315,211,323,181,337,151,363,123,390,102"/>
+<area shape="rect" title=" " alt="" coords="352,152,471,177"/>
+<area shape="poly" title=" " alt="" coords="414,104,414,138,409,138,409,104"/>
+<area shape="rect" title=" " alt="" coords="618,152,677,177"/>
+<area shape="poly" title=" " alt="" coords="450,101,606,148,604,153,448,107"/>
+<area shape="poly" title=" " alt="" coords="466,101,688,149,687,154,464,107"/>
+<area shape="rect" title=" " alt="" coords="93,152,162,177"/>
+<area shape="poly" title=" " alt="" coords="366,107,176,154,175,149,365,101"/>
+<area shape="rect" title=" " alt="" coords="186,152,277,177"/>
+<area shape="poly" title=" " alt="" coords="383,107,274,149,272,144,381,102"/>
+<area shape="poly" title=" " alt="" coords="496,178,482,180,119,231,118,226,482,175,495,173"/>
+<area shape="poly" title=" " alt="" coords="582,175,729,220,727,225,581,180"/>
+<area shape="rect" title=" " alt="" coords="515,225,590,251"/>
+<area shape="poly" title=" " alt="" coords="549,177,553,212,547,212,543,178"/>
+<area shape="rect" title=" " alt="" coords="614,225,673,251"/>
+<area shape="poly" title=" " alt="" coords="562,175,618,215,615,219,559,180"/>
+<area shape="poly" title=" " alt="" coords="508,180,359,226,358,220,507,175"/>
+<area shape="rect" title=" " alt="" coords="369,225,491,251"/>
+<area shape="poly" title=" " alt="" coords="528,180,462,220,459,216,525,175"/>
+<area shape="rect" title=" " alt="" coords="1111,152,1165,177"/>
+<area shape="poly" title=" " alt="" coords="1141,104,1141,138,1135,138,1135,104"/>
 </map>
 </div>
 </div>
@@ -184,7 +198,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="MuDISGenerator_8cxx_source.html#l00022">22</a> of file <a class="el" href="MuDISGenerator_8cxx_source.html">MuDISGenerator.cxx</a>.</p>
+<p class="definition">Definition at line <a class="el" href="MuDISGenerator_8cxx_source.html#l00027">27</a> of file <a class="el" href="MuDISGenerator_8cxx_source.html">MuDISGenerator.cxx</a>.</p>
 
 </div>
 </div>
@@ -200,7 +214,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="MuDISGenerator_8cxx_source.html#l00023">23</a> of file <a class="el" href="MuDISGenerator_8cxx_source.html">MuDISGenerator.cxx</a>.</p>
+<p class="definition">Definition at line <a class="el" href="MuDISGenerator_8cxx_source.html#l00028">28</a> of file <a class="el" href="MuDISGenerator_8cxx_source.html">MuDISGenerator.cxx</a>.</p>
 
 </div>
 </div>

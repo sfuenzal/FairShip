@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['basiclibs_0',['basiclibs',['../namespacebasiclibs.html',1,'']]]
+  ['basedetector_0',['BaseDetector',['../namespaceBaseDetector.html',1,'']]]
 ];

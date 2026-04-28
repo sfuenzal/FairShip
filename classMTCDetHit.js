@@ -1,0 +1,27 @@
+var classMTCDetHit =
+[
+    [ "MTCDetHit", "classMTCDetHit.html#a9e3052c20946b9585ede85f89f4012fa", null ],
+    [ "MTCDetHit", "classMTCDetHit.html#aee61f60f83aa2d509d272375badfcdc7", null ],
+    [ "MTCDetHit", "classMTCDetHit.html#a7c86ac5b342de0f8bea667d1d5a13ef6", null ],
+    [ "~MTCDetHit", "classMTCDetHit.html#a00a2acd5676fc160ec8d147b4988597d", null ],
+    [ "ClassDefOverride", "classMTCDetHit.html#acdd5e17375bf8edd338c3854271b9ac8", null ],
+    [ "GetChannelCoordinates", "classMTCDetHit.html#a074b71713b05f8aad10440dd766c3ade", null ],
+    [ "GetChannelID", "classMTCDetHit.html#ad03ffca6b808d429de707303fedf268f", null ],
+    [ "GetEnergy", "classMTCDetHit.html#a99702f859fa3d15106a1229fd7b78f4e", null ],
+    [ "GetLayer", "classMTCDetHit.html#adec45e495568fe3478081b7f413c8d4c", null ],
+    [ "GetSignal", "classMTCDetHit.html#aa80b19051c5eef695800f7db0d430a45", null ],
+    [ "GetSiPM", "classMTCDetHit.html#ade88908ae8d4bded7c05bfb9107ddb2d", null ],
+    [ "GetSiPMChan", "classMTCDetHit.html#a45aa27849676c5a7852b4f467d45367f", null ],
+    [ "GetStationType", "classMTCDetHit.html#a64c40a4143c5fe2b59571b8325d2a12c", null ],
+    [ "GetTime", "classMTCDetHit.html#a89dfd480e0ad0e1ebbaa473eaa062a93", null ],
+    [ "isValid", "classMTCDetHit.html#a51adfde65e24f2895a47d43fa868aa8b", null ],
+    [ "operator=", "classMTCDetHit.html#afb02e0ae751ce734df0f1b439326a2d8", null ],
+    [ "Print", "classMTCDetHit.html#acc685970068c767f786875786b03c793", null ],
+    [ "setInvalid", "classMTCDetHit.html#aa44b6ab6ff5420be8a73853b53c1c672", null ],
+    [ "flag", "classMTCDetHit.html#a66f71efa249175be8fe4d5cc11a83f95", null ],
+    [ "signals", "classMTCDetHit.html#a6b33710eec297647716726c01558093c", null ],
+    [ "time", "classMTCDetHit.html#a541e56fa8abea47621f8c6fdcdda5fdb", null ],
+    [ "Xch", "classMTCDetHit.html#ab386b001e8c86869528fb8350facae61", null ],
+    [ "Ych", "classMTCDetHit.html#a71b4a82c51ae60fe4fc20824941dc37f", null ],
+    [ "Zch", "classMTCDetHit.html#a8f74f01f8d5e85cc07c1c7754729c750", null ]
+];

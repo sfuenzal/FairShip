@@ -1,7 +1,7 @@
 var classShipBFieldMap =
 [
     [ "binPair", "classShipBFieldMap.html#a1f037b96866ce64297220a5065b24aa6", null ],
-    [ "floatArray", "classShipBFieldMap.html#a21ba2ca604f36c99d2f427934ebbd2dc", null ],
+    [ "floatArray", "classShipBFieldMap.html#a38c17ec021e162b155d75d5e00660c51", null ],
     [ "CoordAxis", "classShipBFieldMap.html#a861764baf5e15176bc69c9942c2a9c65", [
       [ "xAxis", "classShipBFieldMap.html#a861764baf5e15176bc69c9942c2a9c65ad5cd59e6ead2d6f825344e8cbf5bc68e", null ],
       [ "yAxis", "classShipBFieldMap.html#a861764baf5e15176bc69c9942c2a9c65a2a92b59da7fcc9aa9e15dcd556326087", null ],
@@ -9,11 +9,11 @@ var classShipBFieldMap =
     ] ],
     [ "ShipBFieldMap", "classShipBFieldMap.html#a308e307e932b4b35ad963ec61593cac5", null ],
     [ "ShipBFieldMap", "classShipBFieldMap.html#a06e67002d9891031bdb9e146f2f9753e", null ],
-    [ "~ShipBFieldMap", "classShipBFieldMap.html#ac3d6fe3f7521a83ab512a6cf1198b815", null ],
-    [ "ShipBFieldMap", "classShipBFieldMap.html#ae8c80bae9a4fd0fe21852afab9623e41", null ],
+    [ "~ShipBFieldMap", "classShipBFieldMap.html#ad4956091d9908f0150898a5acc44e679", null ],
+    [ "ShipBFieldMap", "classShipBFieldMap.html#a2117a4ad076f903a07540e26b10501c2", null ],
     [ "BInterCalc", "classShipBFieldMap.html#a352c01b50449bd888308ffe0cc52b860", null ],
-    [ "ClassDef", "classShipBFieldMap.html#a9b573ef2f1a31da01b219b4d4c5603da", null ],
-    [ "Field", "classShipBFieldMap.html#a650565c19b1939a5845568644c38646e", null ],
+    [ "ClassDefOverride", "classShipBFieldMap.html#a9f14bc11fe308155f4f96a6c84cfdbc9", null ],
+    [ "Field", "classShipBFieldMap.html#a6ef8935a084b7e803008a5cd379118b5", null ],
     [ "getBinInfo", "classShipBFieldMap.html#abda94682051dbd6af5ef32a87582f541", null ],
     [ "GetdX", "classShipBFieldMap.html#a58d7a5638f26e72040e5e011c6c827c8", null ],
     [ "GetdY", "classShipBFieldMap.html#a9fb3d680bf88bd549682c04dd0809201", null ],
@@ -45,7 +45,7 @@ var classShipBFieldMap =
     [ "initialise", "classShipBFieldMap.html#a71e32d01e93ebca9882ad005615567cd", null ],
     [ "insideRange", "classShipBFieldMap.html#ac066904278e00e14789f6287e6422f18", null ],
     [ "IsACopy", "classShipBFieldMap.html#a64e079a1e18b8eac08a3f671e43d2804", null ],
-    [ "operator=", "classShipBFieldMap.html#a0c2b6d3780b32d9221d1d2dae50f0d7b", null ],
+    [ "operator=", "classShipBFieldMap.html#a584133dc079ad2dc254f5918ee0c7b00", null ],
     [ "readMapFile", "classShipBFieldMap.html#ad77b9af6b70c51d794b47732149dca92", null ],
     [ "readRootFile", "classShipBFieldMap.html#acaa4364171c8cb1d35240f9055b7ff87", null ],
     [ "readTextFile", "classShipBFieldMap.html#aaf8aaa1e55d30bdec8a91e05a7a54fd4", null ],

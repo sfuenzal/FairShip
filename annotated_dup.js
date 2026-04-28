@@ -1,10 +1,12 @@
 var annotated_dup =
 [
+    [ "BaseDetector", "namespaceBaseDetector.html", [
+      [ "BaseDetector", "classBaseDetector_1_1BaseDetector.html", "classBaseDetector_1_1BaseDetector" ]
+    ] ],
     [ "darkphoton", "namespacedarkphoton.html", [
       [ "DarkPhoton", "classdarkphoton_1_1DarkPhoton.html", "classdarkphoton_1_1DarkPhoton" ]
     ] ],
     [ "eventDisplay", "namespaceeventDisplay.html", [
-      [ "DrawEcalCluster", "classeventDisplay_1_1DrawEcalCluster.html", "classeventDisplay_1_1DrawEcalCluster" ],
       [ "DrawTracks", "classeventDisplay_1_1DrawTracks.html", "classeventDisplay_1_1DrawTracks" ],
       [ "DrawVetoDigi", "classeventDisplay_1_1DrawVetoDigi.html", "classeventDisplay_1_1DrawVetoDigi" ],
       [ "EventLoop", "classeventDisplay_1_1EventLoop.html", "classeventDisplay_1_1EventLoop" ],
@@ -16,31 +18,6 @@ var annotated_dup =
         [ "event_inspector", "classexperimental_1_1analysis__toolkit_1_1event__inspector.html", "classexperimental_1_1analysis__toolkit_1_1event__inspector" ],
         [ "selection_check", "classexperimental_1_1analysis__toolkit_1_1selection__check.html", "classexperimental_1_1analysis__toolkit_1_1selection__check" ]
       ] ]
-    ] ],
-    [ "g4Ex", "namespaceg4Ex.html", [
-      [ "MyEventAction", "classg4Ex_1_1MyEventAction.html", "classg4Ex_1_1MyEventAction" ],
-      [ "MyGeneratorAction", "classg4Ex_1_1MyGeneratorAction.html", "classg4Ex_1_1MyGeneratorAction" ],
-      [ "MyRunAction", "classg4Ex_1_1MyRunAction.html", "classg4Ex_1_1MyRunAction" ],
-      [ "MySteppingAction", "classg4Ex_1_1MySteppingAction.html", "classg4Ex_1_1MySteppingAction" ],
-      [ "MyTrackingAction", "classg4Ex_1_1MyTrackingAction.html", "classg4Ex_1_1MyTrackingAction" ],
-      [ "ScoreSD", "classg4Ex_1_1ScoreSD.html", "classg4Ex_1_1ScoreSD" ]
-    ] ],
-    [ "g4Ex_args", "namespaceg4Ex__args.html", [
-      [ "MyEventAction", "classg4Ex__args_1_1MyEventAction.html", "classg4Ex__args_1_1MyEventAction" ],
-      [ "MyGeneratorAction", "classg4Ex__args_1_1MyGeneratorAction.html", "classg4Ex__args_1_1MyGeneratorAction" ],
-      [ "MyRunAction", "classg4Ex__args_1_1MyRunAction.html", "classg4Ex__args_1_1MyRunAction" ],
-      [ "MySteppingAction", "classg4Ex__args_1_1MySteppingAction.html", "classg4Ex__args_1_1MySteppingAction" ],
-      [ "MyTrackingAction", "classg4Ex__args_1_1MyTrackingAction.html", "classg4Ex__args_1_1MyTrackingAction" ],
-      [ "ScoreSD", "classg4Ex__args_1_1ScoreSD.html", "classg4Ex__args_1_1ScoreSD" ]
-    ] ],
-    [ "g4Ex_gap", "namespaceg4Ex__gap.html", [
-      [ "MyEventAction", "classg4Ex__gap_1_1MyEventAction.html", "classg4Ex__gap_1_1MyEventAction" ],
-      [ "MyGeneratorAction", "classg4Ex__gap_1_1MyGeneratorAction.html", "classg4Ex__gap_1_1MyGeneratorAction" ],
-      [ "MyRunAction", "classg4Ex__gap_1_1MyRunAction.html", "classg4Ex__gap_1_1MyRunAction" ],
-      [ "MySteppingAction", "classg4Ex__gap_1_1MySteppingAction.html", "classg4Ex__gap_1_1MySteppingAction" ],
-      [ "MyTrackingAction", "classg4Ex__gap_1_1MyTrackingAction.html", "classg4Ex__gap_1_1MyTrackingAction" ],
-      [ "MyTrackingActionD", "classg4Ex__gap_1_1MyTrackingActionD.html", "classg4Ex__gap_1_1MyTrackingActionD" ],
-      [ "ScoreSD", "classg4Ex__gap_1_1ScoreSD.html", "classg4Ex__gap_1_1ScoreSD" ]
     ] ],
     [ "genfit", "namespacegenfit.html", [
       [ "FairShipFields", "classgenfit_1_1FairShipFields.html", "classgenfit_1_1FairShipFields" ]
@@ -54,40 +31,44 @@ var annotated_dup =
     [ "method_logger", "namespacemethod__logger.html", [
       [ "MethodLogger", "classmethod__logger_1_1MethodLogger.html", "classmethod__logger_1_1MethodLogger" ]
     ] ],
-    [ "rootpyPickler", "namespacerootpyPickler.html", [
-      [ "IO_Wrapper", "classrootpyPickler_1_1IO__Wrapper.html", "classrootpyPickler_1_1IO__Wrapper" ],
-      [ "Pickler", "classrootpyPickler_1_1Pickler.html", "classrootpyPickler_1_1Pickler" ],
-      [ "ROOT_Proxy", "classrootpyPickler_1_1ROOT__Proxy.html", "classrootpyPickler_1_1ROOT__Proxy" ],
-      [ "Unpickler", "classrootpyPickler_1_1Unpickler.html", "classrootpyPickler_1_1Unpickler" ]
-    ] ],
-    [ "rootUtils", "namespacerootUtils.html", [
-      [ "PyListOfLeaves", "classrootUtils_1_1PyListOfLeaves.html", null ]
+    [ "MTCDetector", "namespaceMTCDetector.html", [
+      [ "MTCDetector", "classMTCDetector_1_1MTCDetector.html", "classMTCDetector_1_1MTCDetector" ]
     ] ],
     [ "rpvsusy", "namespacerpvsusy.html", [
       [ "constants", "classrpvsusy_1_1constants.html", "classrpvsusy_1_1constants" ],
       [ "RPVSUSY", "classrpvsusy_1_1RPVSUSY.html", "classrpvsusy_1_1RPVSUSY" ],
       [ "RPVSUSYbranchings", "classrpvsusy_1_1RPVSUSYbranchings.html", "classrpvsusy_1_1RPVSUSYbranchings" ]
     ] ],
+    [ "SBTDetector", "namespaceSBTDetector.html", [
+      [ "SBTDetector", "classSBTDetector_1_1SBTDetector.html", "classSBTDetector_1_1SBTDetector" ]
+    ] ],
+    [ "SciFiMapping", "namespaceSciFiMapping.html", [
+      [ "SciFiMapping", "classSciFiMapping_1_1SciFiMapping.html", "classSciFiMapping_1_1SciFiMapping" ]
+    ] ],
+    [ "SHiP", "namespaceSHiP.html", [
+      [ "Detector", "classSHiP_1_1Detector.html", "classSHiP_1_1Detector" ],
+      [ "DetectorHit", "classSHiP_1_1DetectorHit.html", "classSHiP_1_1DetectorHit" ],
+      [ "DetectorPoint", "classSHiP_1_1DetectorPoint.html", "classSHiP_1_1DetectorPoint" ],
+      [ "Generator", "classSHiP_1_1Generator.html", "classSHiP_1_1Generator" ]
+    ] ],
     [ "shipDigiReco", "namespaceshipDigiReco.html", [
       [ "ShipDigiReco", "classshipDigiReco_1_1ShipDigiReco.html", "classshipDigiReco_1_1ShipDigiReco" ]
     ] ],
-    [ "ShipGeo", "namespaceShipGeo.html", [
-      [ "ShipGeo", "classShipGeo_1_1ShipGeo.html", "classShipGeo_1_1ShipGeo" ]
-    ] ],
     [ "ShipGeoConfig", "namespaceShipGeoConfig.html", [
-      [ "_SingletonDict", "classShipGeoConfig_1_1__SingletonDict.html", "classShipGeoConfig_1_1__SingletonDict" ],
       [ "AttrDict", "classShipGeoConfig_1_1AttrDict.html", "classShipGeoConfig_1_1AttrDict" ],
-      [ "Config", "classShipGeoConfig_1_1Config.html", "classShipGeoConfig_1_1Config" ],
-      [ "ConfigRegistry", "classShipGeoConfig_1_1ConfigRegistry.html", "classShipGeoConfig_1_1ConfigRegistry" ]
-    ] ],
-    [ "shipPid", "namespaceshipPid.html", [
-      [ "Task", "classshipPid_1_1Task.html", "classshipPid_1_1Task" ]
+      [ "Config", "classShipGeoConfig_1_1Config.html", "classShipGeoConfig_1_1Config" ]
     ] ],
     [ "shipVertex", "namespaceshipVertex.html", [
       [ "Task", "classshipVertex_1_1Task.html", "classshipVertex_1_1Task" ]
     ] ],
     [ "shipVeto", "namespaceshipVeto.html", [
       [ "Task", "classshipVeto_1_1Task.html", "classshipVeto_1_1Task" ]
+    ] ],
+    [ "splitcalDetector", "namespacesplitcalDetector.html", [
+      [ "splitcalDetector", "classsplitcalDetector_1_1splitcalDetector.html", "classsplitcalDetector_1_1splitcalDetector" ]
+    ] ],
+    [ "strawtubesDetector", "namespacestrawtubesDetector.html", [
+      [ "strawtubesDetector", "classstrawtubesDetector_1_1strawtubesDetector.html", "classstrawtubesDetector_1_1strawtubesDetector" ]
     ] ],
     [ "study_GammaConv", "namespacestudy__GammaConv.html", [
       [ "Block", "classstudy__GammaConv_1_1Block.html", "classstudy__GammaConv_1_1Block" ]
@@ -98,107 +79,55 @@ var annotated_dup =
     [ "study_thinTarget", "namespacestudy__thinTarget.html", [
       [ "Block", "classstudy__thinTarget_1_1Block.html", "classstudy__thinTarget_1_1Block" ]
     ] ],
-    [ "test_shipGeoConfig", "namespacetest__shipGeoConfig.html", [
-      [ "TestInheritance", "classtest__shipGeoConfig_1_1TestInheritance.html", "classtest__shipGeoConfig_1_1TestInheritance" ],
-      [ "TestSingleConfig", "classtest__shipGeoConfig_1_1TestSingleConfig.html", "classtest__shipGeoConfig_1_1TestSingleConfig" ],
-      [ "TestStringConditionalConfig", "classtest__shipGeoConfig_1_1TestStringConditionalConfig.html", "classtest__shipGeoConfig_1_1TestStringConditionalConfig" ],
-      [ "TestStringNewLine", "classtest__shipGeoConfig_1_1TestStringNewLine.html", "classtest__shipGeoConfig_1_1TestStringNewLine" ],
-      [ "TestStringSingleConfig", "classtest__shipGeoConfig_1_1TestStringSingleConfig.html", "classtest__shipGeoConfig_1_1TestStringSingleConfig" ]
+    [ "timeDetector", "namespacetimeDetector.html", [
+      [ "timeDetector", "classtimeDetector_1_1timeDetector.html", "classtimeDetector_1_1timeDetector" ]
     ] ],
-    [ "TTCluster", "namespaceTTCluster.html", [
-      [ "TTCluster", "classTTCluster_1_1TTCluster.html", "classTTCluster_1_1TTCluster" ]
+    [ "tracking_benchmark", "namespacetracking__benchmark.html", [
+      [ "TrackingBenchmark", "classtracking__benchmark_1_1TrackingBenchmark.html", "classtracking__benchmark_1_1TrackingBenchmark" ]
     ] ],
-    [ "__ecalCellWrapper", "struct____ecalCellWrapper.html", "struct____ecalCellWrapper" ],
+    [ "UpstreamTaggerDetector", "namespaceUpstreamTaggerDetector.html", [
+      [ "UpstreamTaggerDetector", "classUpstreamTaggerDetector_1_1UpstreamTaggerDetector.html", "classUpstreamTaggerDetector_1_1UpstreamTaggerDetector" ]
+    ] ],
     [ "Co3Rng", "classCo3Rng.html", "classCo3Rng" ],
     [ "CosmicsGenerator", "classCosmicsGenerator.html", "classCosmicsGenerator" ],
     [ "DPPythia8Generator", "classDPPythia8Generator.html", "classDPPythia8Generator" ],
-    [ "ecal", "classecal.html", "classecal" ],
-    [ "ecalAnalysisMaterial", "classecalAnalysisMaterial.html", "classecalAnalysisMaterial" ],
-    [ "ecalAnalysisSimple", "classecalAnalysisSimple.html", "classecalAnalysisSimple" ],
-    [ "ecalCell", "classecalCell.html", "classecalCell" ],
-    [ "ecalCellMC", "classecalCellMC.html", "classecalCellMC" ],
-    [ "ecalCluster", "classecalCluster.html", "classecalCluster" ],
-    [ "ecalClusterCalibration", "classecalClusterCalibration.html", "classecalClusterCalibration" ],
-    [ "ecalClusterFinder", "classecalClusterFinder.html", "classecalClusterFinder" ],
-    [ "ecalClusterSortProcess", "structecalClusterSortProcess.html", "structecalClusterSortProcess" ],
-    [ "ecalContFact", "classecalContFact.html", "classecalContFact" ],
-    [ "ecalDigi", "classecalDigi.html", "classecalDigi" ],
-    [ "ecalDrawer", "classecalDrawer.html", "classecalDrawer" ],
-    [ "ecalDrawerItem", "classecalDrawerItem.html", "classecalDrawerItem" ],
-    [ "ecalInf", "classecalInf.html", "classecalInf" ],
-    [ "ecalLightMap", "classecalLightMap.html", "classecalLightMap" ],
-    [ "ecalMatch", "classecalMatch.html", "classecalMatch" ],
-    [ "ecalMaximum", "classecalMaximum.html", "classecalMaximum" ],
-    [ "ecalMaximumLocator", "classecalMaximumLocator.html", "classecalMaximumLocator" ],
-    [ "ecalModule", "classecalModule.html", "classecalModule" ],
-    [ "ecalPoint", "classecalPoint.html", "classecalPoint" ],
-    [ "ecalPreCluster", "classecalPreCluster.html", "classecalPreCluster" ],
-    [ "ecalPrepare", "classecalPrepare.html", "classecalPrepare" ],
-    [ "ecalReco", "classecalReco.html", "classecalReco" ],
-    [ "ecalReconstructed", "classecalReconstructed.html", "classecalReconstructed" ],
-    [ "ecalStructure", "classecalStructure.html", "classecalStructure" ],
-    [ "ecalStructureFiller", "classecalStructureFiller.html", "classecalStructureFiller" ],
-    [ "EmulsionMagnet", "classEmulsionMagnet.html", "classEmulsionMagnet" ],
     [ "EvtCalcGenerator", "classEvtCalcGenerator.html", "classEvtCalcGenerator" ],
     [ "exitHadronAbsorber", "classexitHadronAbsorber.html", "classexitHadronAbsorber" ],
     [ "FixedTargetGenerator", "classFixedTargetGenerator.html", "classFixedTargetGenerator" ],
     [ "GenieGenerator", "classGenieGenerator.html", "classGenieGenerator" ],
-    [ "hcal", "classhcal.html", "classhcal" ],
-    [ "hcalAnalysisSimple", "classhcalAnalysisSimple.html", "classhcalAnalysisSimple" ],
-    [ "hcalContFact", "classhcalContFact.html", "classhcalContFact" ],
-    [ "hcalInf", "classhcalInf.html", "classhcalInf" ],
-    [ "hcalLightMap", "classhcalLightMap.html", "classhcalLightMap" ],
-    [ "hcalModule", "classhcalModule.html", "classhcalModule" ],
-    [ "hcalModuleMC", "classhcalModuleMC.html", "classhcalModuleMC" ],
-    [ "hcalPoint", "classhcalPoint.html", "classhcalPoint" ],
-    [ "hcalStructure", "classhcalStructure.html", "classhcalStructure" ],
-    [ "hcalStructureFiller", "classhcalStructureFiller.html", "classhcalStructureFiller" ],
     [ "HNLPythia8Generator", "classHNLPythia8Generator.html", "classHNLPythia8Generator" ],
-    [ "Hpt", "classHpt.html", "classHpt" ],
-    [ "HptPoint", "classHptPoint.html", "classHptPoint" ],
-    [ "MagneticSpectrometer", "classMagneticSpectrometer.html", "classMagneticSpectrometer" ],
+    [ "ISTLPointContainer", "classISTLPointContainer.html", "classISTLPointContainer" ],
     [ "MTCDetector", "classMTCDetector.html", "classMTCDetector" ],
-    [ "MtcDetPoint", "classMtcDetPoint.html", "classMtcDetPoint" ],
+    [ "MTCDetHit", "classMTCDetHit.html", "classMTCDetHit" ],
+    [ "MTCDetPoint", "classMTCDetPoint.html", "classMTCDetPoint" ],
     [ "MuDISGenerator", "classMuDISGenerator.html", "classMuDISGenerator" ],
-    [ "muon", "classmuon.html", "classmuon" ],
     [ "MuonBackGenerator", "classMuonBackGenerator.html", "classMuonBackGenerator" ],
-    [ "muonContFact", "classmuonContFact.html", "classmuonContFact" ],
-    [ "muonHit", "classmuonHit.html", "classmuonHit" ],
-    [ "muonPoint", "classmuonPoint.html", "classmuonPoint" ],
     [ "NtupleGenerator", "classNtupleGenerator.html", "classNtupleGenerator" ],
-    [ "NuageGenerator", "classNuageGenerator.html", "classNuageGenerator" ],
-    [ "NutaudetContFact", "classNutaudetContFact.html", "classNutaudetContFact" ],
-    [ "NuTauMudet", "classNuTauMudet.html", "classNuTauMudet" ],
-    [ "pid", "classpid.html", "classpid" ],
     [ "pyFairModule", "classpyFairModule.html", "classpyFairModule" ],
     [ "Pythia6Generator", "classPythia6Generator.html", "classPythia6Generator" ],
     [ "Pythia8Generator", "classPythia8Generator.html", "classPythia8Generator" ],
     [ "PyTr1Rng", "classPyTr1Rng.html", "classPyTr1Rng" ],
     [ "PyTr3Rng", "classPyTr3Rng.html", "classPyTr3Rng" ],
-    [ "regression", "structregression.html", "structregression" ],
     [ "ShipBellField", "classShipBellField.html", "classShipBellField" ],
     [ "ShipBFieldMap", "classShipBFieldMap.html", "classShipBFieldMap" ],
     [ "ShipCave", "classShipCave.html", "classShipCave" ],
-    [ "ShipChamber", "classShipChamber.html", "classShipChamber" ],
     [ "ShipCompField", "classShipCompField.html", "classShipCompField" ],
     [ "ShipConstField", "classShipConstField.html", "classShipConstField" ],
     [ "ShipFieldCreator", "classShipFieldCreator.html", "classShipFieldCreator" ],
     [ "ShipFieldMaker", "classShipFieldMaker.html", "classShipFieldMaker" ],
     [ "ShipFieldPar", "classShipFieldPar.html", "classShipFieldPar" ],
     [ "ShipGeoCave", "classShipGeoCave.html", "classShipGeoCave" ],
-    [ "ShipGoliath", "classShipGoliath.html", "classShipGoliath" ],
-    [ "ShipGoliathField", "classShipGoliathField.html", "classShipGoliathField" ],
-    [ "ShipHit", "classShipHit.html", "classShipHit" ],
     [ "ShipMagnet", "classShipMagnet.html", "classShipMagnet" ],
     [ "ShipMCTrack", "classShipMCTrack.html", "classShipMCTrack" ],
     [ "ShipMuonShield", "classShipMuonShield.html", "classShipMuonShield" ],
     [ "ShipParticle", "classShipParticle.html", "classShipParticle" ],
     [ "ShipPassiveContFact", "classShipPassiveContFact.html", "classShipPassiveContFact" ],
-    [ "ShipRpcPoint", "classShipRpcPoint.html", "classShipRpcPoint" ],
     [ "ShipStack", "classShipStack.html", "classShipStack" ],
     [ "ShipTargetStation", "classShipTargetStation.html", "classShipTargetStation" ],
     [ "ShipTAUMagneticSpectrometer", "classShipTAUMagneticSpectrometer.html", "classShipTAUMagneticSpectrometer" ],
-    [ "simpleTarget", "classsimpleTarget.html", "classsimpleTarget" ],
+    [ "SiliconTarget", "classSiliconTarget.html", "classSiliconTarget" ],
+    [ "SiliconTargetHit", "classSiliconTargetHit.html", "classSiliconTargetHit" ],
+    [ "SiliconTargetPoint", "classSiliconTargetPoint.html", "classSiliconTargetPoint" ],
     [ "splitcal", "classsplitcal.html", "classsplitcal" ],
     [ "splitcalCluster", "classsplitcalCluster.html", "classsplitcalCluster" ],
     [ "splitcalContFact", "classsplitcalContFact.html", "classsplitcalContFact" ],
@@ -211,6 +140,7 @@ var annotated_dup =
     [ "Target", "classTarget.html", "classTarget" ],
     [ "TargetPoint", "classTargetPoint.html", "classTargetPoint" ],
     [ "TargetTracker", "classTargetTracker.html", "classTargetTracker" ],
+    [ "TEvtGenDecayer", "classTEvtGenDecayer.html", "classTEvtGenDecayer" ],
     [ "TimeDet", "classTimeDet.html", "classTimeDet" ],
     [ "TimeDetHit", "classTimeDetHit.html", "classTimeDetHit" ],
     [ "TimeDetPoint", "classTimeDetPoint.html", "classTimeDetPoint" ],
@@ -221,6 +151,7 @@ var annotated_dup =
     [ "UpstreamTagger", "classUpstreamTagger.html", "classUpstreamTagger" ],
     [ "UpstreamTaggerHit", "classUpstreamTaggerHit.html", "classUpstreamTaggerHit" ],
     [ "UpstreamTaggerPoint", "classUpstreamTaggerPoint.html", "classUpstreamTaggerPoint" ],
+    [ "VectorMCPointSource", "classVectorMCPointSource.html", "classVectorMCPointSource" ],
     [ "veto", "classveto.html", "classveto" ],
     [ "Veto", "classVeto.html", null ],
     [ "vetoContFact", "classvetoContFact.html", "classvetoContFact" ],
