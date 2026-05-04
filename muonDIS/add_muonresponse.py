@@ -34,6 +34,10 @@ headers = [
     "Original UBTPoint Count",
     "Muon UBTPoints Added",
     "Combined UBTPoint Count",
+    "Muon lastBitMuonShieldPoints Available",
+    "Original lastBitMuonShieldPoint Count",
+    "Muon lastBitMuonShieldPoints Added",
+    "Combined lastBitMuonShieldPoints Count",
 ]
 
 
@@ -57,7 +61,7 @@ def inspect_file(inputfile, muonfile, print_table=False):
                 if hit.GetTrackID() == 0:
                     muons_found = True
                     muoncount += 1
-
+                    
         muon_ubthits = len(muon_event.muon_UpstreamTaggerPoints)
         muon_ubtcount = 0
         if muon_ubthits:
@@ -65,6 +69,13 @@ def inspect_file(inputfile, muonfile, print_table=False):
                 if hit.GetTrackID() == 0:
                     muon_ubtcount += 1
 
+        muon_lastbitmuonshieldhits = len(muon_event.muon_lastBitMuonShieldPoints)
+        muon_lastbitmuonshieldcount = 0
+        if muon_lastbitmuonshieldhits:
+            for hit in input_event.lastBitMuonShieldPoint:
+                if hit.GetTrackID() == 0:
+                    muon_lastbitmuonshieldcount += 1
+                
         table_data.append(
             [
                 i,
@@ -76,6 +87,10 @@ def inspect_file(inputfile, muonfile, print_table=False):
                 len(input_event.UpstreamTaggerPoint) - muon_ubtcount,
                 muon_ubtcount,
                 len(input_event.UpstreamTaggerPoint),
+                muon_lastbitmuonshieldhits,
+                len(input_event.lastBitMuonShieldPoint) - muon_lastbitmuonshieldcount,
+                muon_lastbitmuonshieldcount,
+                len(input_event.lastBitMuonShieldPoint),
             ]
         )
 
@@ -91,7 +106,7 @@ def inspect_file(inputfile, muonfile, print_table=False):
 def modify_file(inputfile, muonfile):
     """Add information from original muon to input simulation file."""
     logging.warning(
-        f"vetoPoints & UpstreamTaggerPoints from the incoming muon (saved in {muonfile}) will be added to {inputfile}."
+        f"vetoPoints, UpstreamTaggerPoints & lastBitMuonShieldPoints from the incoming muon (saved in {muonfile}) will be added to {inputfile}."
     )
 
     input_file = r.TFile.Open(inputfile, "read")
@@ -122,6 +137,9 @@ def modify_file(inputfile, muonfile):
 
     combined_UpstreamTaggerPoint = r.TClonesArray("UpstreamTaggerPoint")
     output_tree.SetBranchAddress("UpstreamTaggerPoint", combined_UpstreamTaggerPoint)
+
+    combined_lastBitMuonShieldPoint = r.TClonesArray("lastBitMuonShieldPoint")
+    output_tree.SetBranchAddress("lastBitMuonShieldPoint", combined_lastBitMuonShieldPoint)
 
     table_data = []
 
@@ -171,6 +189,29 @@ def modify_file(inputfile, muonfile):
                 ubt_index += 1
                 muon_ubtcount += 1
 
+        combined_lastBitMuonShieldPoint.Clear()
+
+        lastbitmuonshield_index = 0
+
+        for hit in input_event.lastBitMuonShieldPoint:
+            if combined_lastBitMuonShieldPoint.GetSize() == lastbitmuonshield_index:
+                combined_lastBitMuonShieldPoint.Expand(lastbitmuonshield_index + 1)
+            combined_lastBitMuonShieldPoint[lastbitmuonshield_index] = (
+                hit  # pending fix to support ROOT 6.32+
+            )
+            lastbitmuonshield_index += 1
+
+        muon_lastbitmuonshieldcount = 0
+        for hit in muon_event.muon_lastBitMuonShieldPoints:
+            if hit.GetZ() < interaction_point.Z():
+                if combined_lastBitMuonShieldPoint.GetSize() == lastbitmuonshield_index:
+                    combined_lastBitMuonShieldPoint.Expand(lastbitmuonshield_index + 1)
+                combined_lastBitMuonShieldPoint[lastbitmuonshield_index] = (
+                    hit  # pending fix to support ROOT 6.32+
+                )
+                lastbitmuonshield_index += 1
+                muon_lastbitmuonshieldcount += 1
+
         table_data.append(
             [
                 i,
@@ -182,6 +223,10 @@ def modify_file(inputfile, muonfile):
                 len(input_event.UpstreamTaggerPoint),
                 muon_ubtcount,
                 len(combined_UpstreamTaggerPoint),
+                len(muon_event.muon_lastBitMuonShieldPoints),
+                len(input_event.lastBitMuonShieldPoint),
+                muon_lastbitmuonshieldcount,
+                len(combined_lastBitMuonShieldPoint),
             ]
         )
         output_tree.Fill()
@@ -201,7 +246,7 @@ muons_found = inspect_file(args.inputfile, args.muonfile)
 
 if not muons_found:
     print(
-        "Incoming muon's vetoPoints & UpstreamTaggerPoints inf missing in file, proceeding with modification"
+        "Incoming muon's vetoPoints, UpstreamTaggerPoints & lastBitMuonShieldPoints inf missing in file, proceeding with modification"
     )
     modify_file(args.inputfile, args.muonfile)
 else:

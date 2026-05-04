@@ -72,6 +72,9 @@ output_tree.Branch("muon_vetoPoints", muon_vetoPoints)
 muon_UpstreamTaggerPoints = r.TClonesArray("UpstreamTaggerPoint")
 output_tree.Branch("muon_UpstreamTaggerPoints", muon_UpstreamTaggerPoints)
 
+muon_lastBitMuonShieldPoints = r.TClonesArray("lastBitMuonShieldPoint")
+output_tree.Branch("muon_lastBitMuonShieldPoints", muon_lastBitMuonShieldPoints)
+
 if args.generator == "MuonBack":
     reco_file_name = "ship.conical.MuonBack-TGeant4.root"
 elif args.generator == "PG":
@@ -222,6 +225,7 @@ headers = [
     "nSoft Tracks",
     "nSBT Hits(muon)",
     "nUBT Hits(muon)",
+    "nLastBitMuonShield Hits(muon)",
     "Weight_muon",
 ]
 csvwriter.writerow(headers)
@@ -307,7 +311,7 @@ for inputFolder in os.listdir(path):
                     track_array.Add(track)
 
             muon_UpstreamTaggerPoints.Clear()
-
+            
             ubt_index = 0
 
             for hit in event.UpstreamTaggerPoint:
@@ -321,6 +325,22 @@ for inputFolder in os.listdir(path):
                 muon_UpstreamTaggerPoints[ubt_index] = hit
 
                 ubt_index += 1
+
+            muon_UpstreamTaggerPoints.Clear()
+            
+            lastbitmuonshield_index = 0
+
+            for hit in event.lastBitMuonShieldPoint:
+                track_id = hit.GetTrackID()
+
+                if not (track_id == muon_):
+                    continue
+
+                if muon_lastBitMuonShieldPoints.GetSize() == lastbitmuonshield_index:
+                    muon_lastBitMuonShieldPoints.Expand(lastbitmuonshield_index + 1)
+                muon_lastBitMuonShieldPoints[lastbitmuonshield_index] = hit
+
+                lastbitmuonshield_index += 1
 
             for hit in event.strawtubesPoint:
                 detID = hit.GetDetectorID()
@@ -358,7 +378,7 @@ for inputFolder in os.listdir(path):
 
                         #weight = event.MCTrack[track_id].GetWeight()
                         weight = 1.0
-
+                        
                         # Fill imuondata
                         imuondata[0] = float(hit.PdgCode())
                         imuondata[1] = float(hit.GetPx() / u.GeV)
@@ -383,6 +403,7 @@ for inputFolder in os.listdir(path):
                                 len(track_array),
                                 len(muon_vetoPoints),
                                 len(muon_UpstreamTaggerPoints),
+                                len(muon_lastBitMuonShieldPoints),
                                 imuondata[7],
                             ]
                         )
@@ -444,6 +465,7 @@ with r.TFile.Open(args.outputfile, "read") as file:
         num_tracks = len(event.tracks)
         num_muonhits = len(event.muon_vetoPoints)
         num_ubthits = len(event.muon_UpstreamTaggerPoints)
+        num_lastbitmuonshieldhits = len(event.muon_lastBitMuonShieldPoints)
 
         P = r.TMath.Sqrt(px**2 + py**2 + pz**2)
 
@@ -459,6 +481,7 @@ with r.TFile.Open(args.outputfile, "read") as file:
                 num_tracks,
                 num_muonhits,
                 num_ubthits,
+                num_lastbitmuonshieldhits,
                 weight,
             ]
         )
