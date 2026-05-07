@@ -117,9 +117,10 @@ def inspect_file(filename):
         nSoftTracks = event.SoftParticles.GetEntries()
         nSBThits = event.muon_vetoPoints.GetEntries()
         nUBThits = event.muon_UpstreamTaggerPoints.GetEntries()
+        nLastBitMuonShieldHits = event.muon_lastBitMuonShieldPoints.GetEntries()
 
         table_rows.append(
-            [i, fix_target, nParticles, nSoftTracks, nSBThits, nUBThits, cross_sec]
+            [i, fix_target, nParticles, nSoftTracks, nSBThits, nUBThits, nLastBitMuonShieldHits, cross_sec]
         )
 
     file.Close()
@@ -163,6 +164,11 @@ def makeMuonDIS():
     muon_UpstreamTaggerPoints = r.TClonesArray("UpstreamTaggerPoint")
     output_tree.Branch(
         "muon_UpstreamTaggerPoints", muon_UpstreamTaggerPoints, 32000, -1
+    )
+
+    muon_lastBitMuonShieldPoints = r.TClonesArray("lastBitMuonShieldPoint")
+    output_tree.Branch(
+	"muon_lastBitMuonShieldPoints", muon_lastBitMuonShieldPoints, 32000, -1
     )
 
     myPythia = r.TPythia6()
@@ -319,6 +325,16 @@ def makeMuonDIS():
                 muon_UpstreamTaggerPoints[ubt_index] = hit
                 ubt_index += 1
 
+            muon_lastBitMuonShieldPoints.Clear()
+
+            lastBitMuonShieldPoints_index = 0
+            for hit in muon_tree.muon_lastBitMuonShieldPoints:
+                if muon_lastBitMuonShieldPoints.GetSize() == lastBitMuonShieldPoints_index:
+                    muon_lastBitMuonShieldPoints.Expand(lastBitMuonShieldPoints_index + 1)
+                hit.SetTrackID(0)  # Set TrackID to match for muon ID for new simulation
+                muon_lastBitMuonShieldPoints[lastBitMuonShieldPoints_index] = hit
+                lastBitMuonShieldPoints_index += 1
+
             output_tree.Fill()
             DIS_table.append(
                 [
@@ -328,6 +344,7 @@ def makeMuonDIS():
                     len(dPartSoft),
                     len(muon_vetoPoints),
                     len(muon_UpstreamTaggerPoints),
+                    len(muon_lastBitMuonShieldPoints),
                     xsec,
                 ]
             )

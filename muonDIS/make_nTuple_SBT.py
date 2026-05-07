@@ -30,6 +30,12 @@ parser.add_argument(
     help="path to muon background files",
     default="/eos/experiment/ship/simulation/bkg/MuonBack_2024helium/8070735",
 )
+parser.add_argument(
+    "-g",
+    "--generator",
+    help="type of generator, options are: MuonBack or PG",
+    default="MuonBack",
+)
 args = parser.parse_args()
 
 if args.testing_code:
@@ -65,6 +71,14 @@ output_tree.Branch("muon_vetoPoints", muon_vetoPoints)
 
 muon_UpstreamTaggerPoints = r.TClonesArray("UpstreamTaggerPoint")
 output_tree.Branch("muon_UpstreamTaggerPoints", muon_UpstreamTaggerPoints)
+
+muon_lastBitMuonShieldPoints = r.TClonesArray("lastBitMuonShieldPoint")
+output_tree.Branch("muon_lastBitMuonShieldPoints", muon_lastBitMuonShieldPoints)
+
+if args.generator == "MuonBack":
+    reco_file_name = "ship.conical.MuonBack-TGeant4.root"
+elif args.generator == "PG":
+    reco_file_name = "ship.conical.PG_13-TGeant4_rec.root"
 
 h = {}
 h["PvPt_muon"] = r.TH2F(
@@ -123,7 +137,8 @@ def printMCTrack(n, MCTrack):
                 mcp.GetStartY() / u.m,
                 mcp.GetStartZ() / u.m,
                 mcp.GetMotherId(),
-                mcp.GetWeight(),
+                #mcp.GetWeight(),
+                1.0,
                 mcp.GetProcName().Data(),
             )
         )
@@ -141,7 +156,8 @@ def printMCTrack(n, MCTrack):
                 mcp.GetStartY() / u.m,
                 mcp.GetStartZ() / u.m,
                 mcp.GetMotherId(),
-                mcp.GetWeight(),
+                #mcp.GetWeight(),
+                1.0,
                 mcp.GetProcName().Data(),
             )
         )
@@ -210,6 +226,7 @@ headers = [
     "nSoft Tracks",
     "nSBT Hits(muon)",
     "nUBT Hits(muon)",
+    "nLastBitMuonShield Hits(muon)",
     "Weight_muon",
 ]
 
@@ -227,7 +244,7 @@ for inputFolder in os.listdir(path):
     f = None
     try:
         f = r.TFile.Open(
-            os.path.join(path, inputFolder, "ship.conical.MuonBack-TGeant4.root"),
+            os.path.join(path, inputFolder, reco_file_name),
             "read",
         )
         tree = f.cbmsim
@@ -254,7 +271,8 @@ for inputFolder in os.listdir(path):
             track_id = hit.GetTrackID()
             P = r.TMath.Sqrt(hit.GetPx() ** 2 + hit.GetPy() ** 2 + hit.GetPz() ** 2)
 
-            if 1000 < detID < 999999 and abs(pid) == 13 and P > P_threshold / u.GeV:
+            #if 1000 < detID < 999999 and abs(pid) == 13 and P > P_threshold / u.GeV:
+            if detID == 0 and abs(pid) == 13 and P > P_threshold / u.GeV:
                 particle_name = pdg.GetParticle(hit.PdgCode()).GetName()
                 if track_id not in muon_ids:
                     muon_ids.append(track_id)
@@ -300,6 +318,22 @@ for inputFolder in os.listdir(path):
 
                 ubt_index += 1
 
+            muon_lastBitMuonShieldPoints.Clear()
+
+            lastbitmuonshield_index = 0
+
+            for hit in event.lastBitMuonShieldPoint:
+                track_id = hit.GetTrackID()
+
+                if not (track_id == muon_):
+                    continue
+
+                if muon_lastBitMuonShieldPoints.GetSize() == lastbitmuonshield_index:
+                    muon_lastBitMuonShieldPoints.Expand(lastbitmuonshield_index + 1)
+                muon_lastBitMuonShieldPoints[lastbitmuonshield_index] = hit
+
+                lastbitmuonshield_index += 1
+
             index = 0
 
             muon_vetoPoints.Clear()
@@ -313,7 +347,8 @@ for inputFolder in os.listdir(path):
                 Pt = r.TMath.Sqrt(hit.GetPx() ** 2 + hit.GetPy() ** 2)
 
                 if (
-                    1000 < detID < 999999
+                    #1000 < detID < 999999
+                    detID == 0
                     and track_id == muon_
                     and P > P_threshold / u.GeV
                 ):
@@ -326,8 +361,9 @@ for inputFolder in os.listdir(path):
 
                     index += 1
 
-                    weight = event.MCTrack[track_id].GetWeight()
-
+                    #weight = event.MCTrack[track_id].GetWeight()
+                    weight = 1.0
+                    
                     if (
                         track_id not in processed_events[global_event_nr]
                     ):  # only save the info of first SBT hit
@@ -356,6 +392,7 @@ for inputFolder in os.listdir(path):
                                 len(track_array),
                                 len(muon_vetoPoints),
                                 len(muon_UpstreamTaggerPoints),
+                                len(muon_lastBitMuonShieldPoints),
                                 imuondata[7],
                             ]
                         )
@@ -423,6 +460,7 @@ with r.TFile.Open(args.outputfile, "read") as file:
         num_tracks = len(event.tracks)
         num_muonhits = len(event.muon_vetoPoints)
         num_ubthits = len(event.muon_UpstreamTaggerPoints)
+        num_lastbitmuonshieldhits = len(event.muon_lastBitMuonShieldPoints)
 
         P = r.TMath.Sqrt(px**2 + py**2 + pz**2)
 
@@ -438,6 +476,7 @@ with r.TFile.Open(args.outputfile, "read") as file:
                 num_tracks,
                 num_muonhits,
                 num_ubthits,
+                num_lastbitmuonshieldhits,
                 weight,
             ]
         )
