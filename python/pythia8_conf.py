@@ -187,7 +187,8 @@ def configure(
     # Load particle & decay data
     # ==========================
 
-    datafile = fairship_root + "/python/hnl_production.yaml"
+    #datafile = fairship_root + "/python/hnl_production.yaml"
+    datafile = fairship_root + "/python/hnl_production_test.yaml"
     with open(datafile) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
     all_channels = data["channels"]

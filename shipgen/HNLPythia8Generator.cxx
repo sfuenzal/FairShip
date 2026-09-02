@@ -153,6 +153,8 @@ HNLPythia8Generator::~HNLPythia8Generator() {
 // -----   Passing the event   ---------------------------------------------
 Bool_t HNLPythia8Generator::ReadEvent(FairPrimaryGenerator* cpg) {
   Double_t tp, tS, zp, xp, yp, zS, xS, yS, pz, px, py, e, w;
+  Double_t dx = 0.;
+  Double_t dy = 0.;
   Double_t tm, zm, xm, ym, pmz, pmx, pmy, em;
   Int_t im;
   // take HNL decay of Pythia, move it to the SHiP decay region
@@ -258,7 +260,9 @@ Bool_t HNLPythia8Generator::ReadEvent(FairPrimaryGenerator* cpg) {
       em = fPythia->event[im].e();
       tm = fPythia->event[im].tProd();
       // foresee finite beam size
-      auto [dx, dy] = CalculateBeamOffset(fsmearBeam, fPaintBeam);
+      auto beamOffset = CalculateBeamOffset(fsmearBeam, fPaintBeam);
+  dx = beamOffset.first;
+  dy = beamOffset.second;
       if (fextFile) {
         // take grand mother particle from input file, to know if primary or
         // secondary production
@@ -344,6 +348,87 @@ Bool_t HNLPythia8Generator::ReadEvent(FairPrimaryGenerator* cpg) {
     // std::cout <<k<< " insert pdg =" <<fPythia->event[k].id() << " pz = " <<
     // pz << " [GeV] zS = " << zS << " [mm] tS = " << tS << "[mm/c]" <<  endl;
   }
+
+  // -----------------------------------------------------------------------
+  // Store the prompt muon from charged B/Bc production decays:
+  //
+  //   B+  ( 521) -> mu+ HNL
+  //   B-  (-521) -> mu- HNL
+  //   Bc+ ( 541) -> mu+ HNL
+  //   Bc- (-541) -> mu- HNL
+  //
+  // HNLPythia8Generator normally stores only the HNL mother, the HNL itself,
+  // and descendants of the selected HNL.  The prompt muon is a sibling of
+  // the HNL, so it is not part of dec_chain and would otherwise be discarded.
+  //
+  // Store it only after the HNL descendants have been copied.  This avoids
+  // changing the dec_chain -> MCTrack index mapping used above.
+  // -----------------------------------------------------------------------
+  const int iHNLmother = fPythia->event[iHNL].mother1();
+
+  if (iHNLmother > 0) {
+    const int motherPdg = fPythia->event[iHNLmother].id();
+    const int absMotherPdg = std::abs(motherPdg);
+
+    // Only charged B and Bc mesons.
+    if (absMotherPdg == 521 || absMotherPdg == 541) {
+
+      // Charge correlation:
+      //   B+/Bc+  -> mu+ (PDG -13)
+      //   B-/Bc-  -> mu- (PDG +13)
+      const int expectedPromptMuonPdg = (motherPdg > 0) ? -13 : 13;
+
+      for (int k = 0; k < fPythia->event.size(); ++k) {
+        if (k == iHNL) {
+          continue;
+        }
+
+        // Direct daughter of the same charged B/Bc as the HNL,
+        // with the expected prompt-muon charge.
+        if (fPythia->event[k].mother1() != iHNLmother ||
+            fPythia->event[k].id() != expectedPromptMuonPdg) {
+          continue;
+        }
+
+        const Double_t promptPx = fPythia->event[k].px();
+        const Double_t promptPy = fPythia->event[k].py();
+        const Double_t promptPz = fPythia->event[k].pz();
+        const Double_t promptE  = fPythia->event[k].e();
+
+        // Use the prompt muon's own Pythia production vertex.  For the
+        // two-body charged-meson production modes this is the B/Bc decay
+        // vertex and should coincide with the HNL production vertex.
+        const Double_t promptX = fPythia->event[k].xProd();
+        const Double_t promptY = fPythia->event[k].yProd();
+        const Double_t promptZ = fPythia->event[k].zProd();
+        const Double_t promptT = fPythia->event[k].tProd();
+
+        Bool_t promptTracking = false;
+        if (fPythia->event[k].isFinal()) {
+          promptTracking = true;
+        }
+
+        // Output-stack index of the charged B/Bc mother:
+        //   external-file mode: 0 = external ancestor, 1 = B/Bc
+        //   otherwise:          0 = B/Bc
+        const Int_t promptMother = fextFile ? 1 : 0;
+
+        cpg->AddTrack(
+            expectedPromptMuonPdg, promptPx, promptPy, promptPz,
+            promptX / cm + dx / cm, promptY / cm + dy / cm, promptZ / cm,
+            promptMother, promptTracking, promptE,
+            promptT / cm / c_light, w);
+
+        LOG(debug) << "Stored prompt muon PDG=" << expectedPromptMuonPdg
+                   << " from mother PDG=" << motherPdg
+                   << " at z=" << promptZ / cm << " cm";
+
+        // The exclusive two-body production mode has one prompt muon.
+        break;
+      }
+    }
+  }
+
   return kTRUE;
 }
 // -------------------------------------------------------------------------
@@ -354,3 +439,4 @@ void HNLPythia8Generator::SetParameters(char* par) {
 }
 
 // -------------------------------------------------------------------------
+

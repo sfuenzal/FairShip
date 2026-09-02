@@ -140,7 +140,7 @@ Bool_t FixedTargetGenerator::InitForCharmOrBeauty(const TString& fInName,
   // convert pot to weight corresponding to one spill of 5e13 pot
   // get histogram with number of pot to normalise
   // pot are counted double, i.e. for each signal, i.e. pot/2.
-  auto* potHist = dynamic_cast<TH1F*>(fin->Get("2"));
+  auto* potHist = dynamic_cast<TH1*>(fin->Get("2"));
   if (!potHist) {
     LOG(error) << "FixedTargetGenerator: histogram '2' not found in input file";
     fin->Close();

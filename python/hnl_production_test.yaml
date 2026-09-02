@@ -1,0 +1,17 @@
+particles:
+  - name: "B+"
+    id: 521
+    cmd: "521:new  B+               B-    1   3   0    5.27925    0.00000    0.00000    0.00000  4.91100e-01   0   1   0   1   0"
+
+selections:
+  b:
+    parameters:
+      - "HardQCD::hardbbbar  = on"
+    particles:
+      - 521
+
+channels:
+  - id: 521
+    decay: "b_mu"
+    coupling: 1
+    idlepton: -13

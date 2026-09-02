@@ -219,6 +219,27 @@ ap.add_argument(
     help="Whether or not to add sensitive plane after the target. False by default.",
 )
 
+# --- B+ -> mu+ HNL production study ----------------------------------------
+ap.add_argument(
+    "--bplus-hnl",
+    action="store_true",
+    help=(
+        "Force the Pythia8 decay B+ -> mu+ HNL (and charge conjugate). "
+        "This mode is intended for -B/--beauty external heavy-flavour input and requires --pythiaDecay."
+    ),
+)
+ap.add_argument("--hnl-mass", type=float, default=1.0, help="HNL mass [GeV]")
+ap.add_argument("--hnl-pdg", type=int, default=9900015, help="HNL PDG code")
+ap.add_argument(
+    "--hnl-ctau-mm",
+    type=float,
+    default=1.0e-3,
+    help=(
+        "Technical Pythia proper decay length [mm]. For this production-only study the HNL is decayed "
+        "to nu_mu anti-nu_mu so it is retained in MCTrack but is not transported as an unknown Geant4 particle."
+    ),
+)
+
 args = ap.parse_args()
 if args.debug:
     logger.setLevel(logging.DEBUG)
@@ -227,6 +248,17 @@ if args.kaon_pion_splits < 0:
     ap.error("--kaon-pion-splits must be >= 0")
 if args.multiple_kpi_splits and args.kaon_pion_splits == 0:
     ap.error("--multiple-kpi-splits requires --kaon-pion-splits > 0")
+if args.bplus_hnl:
+    if not args.beauty:
+        ap.error("--bplus-hnl requires -B/--beauty so FixedTargetGenerator retains target-depth sampling")
+    if not args.pythiaDecay:
+        ap.error("--bplus-hnl requires -P/--pythiaDecay; EvtGen would otherwise own the B decay")
+    if args.hnl_mass <= 0.0:
+        ap.error("--hnl-mass must be positive")
+    if args.hnl_mass >= 5.27934 - 0.105658:
+        ap.error("--hnl-mass is above the B+ -> mu+ HNL two-body threshold (~5.174 GeV)")
+    if args.hnl_ctau_mm <= 0.0:
+        ap.error("--hnl-ctau-mm must be positive")
 
 
 if args.G4only:
@@ -475,10 +507,36 @@ ROOT.SetOwnership(primGen, False)  # C++ FairRunSim takes ownership
 # -----Initialize simulation run------------------------------------
 run.Init()
 
+# Configure B+ -> mu+ HNL after FixedTargetGenerator has created its Pythia8
+# object. With -B, ProcessLevel is off and an external beauty hadron is appended
+# event-by-event, so decay-table changes here act on the subsequent decays while
+# preserving the target-depth sampling performed by FixedTargetGenerator.
+if args.bplus_hnl:
+    p8 = P8gen.GetPythia()
+    hnl = args.hnl_pdg
+    p8.readString(
+        f"{hnl}:new = N2 N2 2 0 0 {args.hnl_mass:.12g} 0.0 0.0 0.0 {args.hnl_ctau_mm:.12g} 0 1 0 1 0"
+    )
+    p8.readString(f"{hnl}:isResonance = false")
+    p8.readString(f"{hnl}:mayDecay = on")
+    # Technical invisible decay: keeps HNL in MCTrack but prevents transport of
+    # an unknown BSM final-state particle through Geant4 in this production study.
+    p8.readString(f"{hnl}:oneChannel = 1 1.0 0 14 -14")
+    # PDG(mu+) = -13. Pythia applies charge conjugation to B-.
+    p8.readString(f"521:oneChannel = 1 1.0 0 -13 {hnl}")
+
+    pdg = ROOT.TDatabasePDG.Instance()
+    if not pdg.GetParticle(hnl):
+        pdg.AddParticle("N2", "N2", args.hnl_mass, True, 0.0, 0.0, "HNL", hnl)
+
+    print(f"Configured forced B+ -> mu+ HNL: m_HNL={args.hnl_mass:g} GeV, PDG={hnl}")
+    p8.particleData.list(521)
+    p8.particleData.list(hnl)
+
 gMC = ROOT.TVirtualMC.GetMC()
 fStack = gMC.GetStack()
-fStack.SetMinPoints(0)
-fStack.SetEnergyCut(0.0)
+fStack.SetMinPoints(1)
+fStack.SetEnergyCut(-1.0)
 if args.kaon_pion_splits > 0:
     fStack.SetSplitting()
 #
@@ -563,11 +621,33 @@ sTree = t.CloneTree(0)
 nEvents = 0
 for n in range(t.GetEntries()):
     rc = t.GetEvent(n)
-    
-    # Keep every generated beauty event.
-    # Do not bias the B production-z distribution using downstream activity.
-    rc = sTree.Fill()
-    nEvents += 1
+    keep_hnl_event = False
+    if args.bplus_hnl and hasattr(t, "MCTrack"):
+        tracks = t.MCTrack
+        for i_tr in range(len(tracks)):
+            tr = tracks[i_tr]
+            if tr.GetPdgCode() != -13:
+                continue
+            mother_id = tr.GetMotherId()
+            if mother_id < 0 or mother_id >= len(tracks):
+                continue
+            if tracks[mother_id].GetPdgCode() != 521:
+                continue
+            for j_tr in range(len(tracks)):
+                sib = tracks[j_tr]
+                if sib.GetPdgCode() == args.hnl_pdg and sib.GetMotherId() == mother_id:
+                    keep_hnl_event = True
+                    break
+            if keep_hnl_event:
+                break
+    if (
+        keep_hnl_event
+        or (len(t.PlaneHAPoint) > 0)
+        or (args.AddCylindricalSensPlane and len(t.PlaneTPoint) > 0)
+        or (args.AddPostTargetSensPlane and len(t.PlanePostTPoint) > 0)
+    ):
+        rc = sTree.Fill()
+        nEvents += 1
 fout.cd()
 for k in fin.GetListOfKeys():
     x = fin.Get(k.GetName())
@@ -592,6 +672,20 @@ if rc1 == 0 and rc2 == 0:
     fsr = vars(args)
     with ROOT.TFile.Open(outFile, "UPDATE") as _of:
         _of.WriteObject(ROOT.TString(json.dumps(fsr)), "FileSummary")
+        if args.bplus_hnl:
+            hnl_meta = {
+                "process": "B+ -> mu+ HNL",
+                "hnl_pdg": args.hnl_pdg,
+                "hnl_mass_GeV": args.hnl_mass,
+                "hnl_ctau_mm": args.hnl_ctau_mm,
+                "beam_momentum_GeV": 400.0,
+                "target_composition": args.target_composition,
+                "target_z0_cm": float(ship_geo.target.z0 / u.cm),
+                "target_z_end_cm": float((ship_geo.target.z0 + ship_geo.target.length) / u.cm),
+                "target_transverse_size_cm": float(ship_geo.target.xy / u.cm),
+                "note": "HNL uses a technical Pythia decay to nu_mu anti-nu_mu for production-only Geant4 compatibility.",
+            }
+            _of.WriteObject(ROOT.TString(json.dumps(hnl_meta)), "HNLFixedTargetConfig")
 else:
     print("WARNING: tempFile mv or rm not successful. No attempt at FileSummary writing")
 
