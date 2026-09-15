@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: Copyright CERN for the benefit of the SHiP Collaboration
 
 import contextlib
+import copy
 import os
 
 import hnl
@@ -157,6 +158,123 @@ def configurerpvsusy(
     _exit_stack.close()
 
 
+
+def _normalize_beauty_process_selection(process_selection):
+    """Normalise charged-B/Bc selection aliases."""
+    aliases = {
+        "B": "b",
+        "b+": "bplus",
+        "B+": "bplus",
+        "b-": "bminus",
+        "B-": "bminus",
+        "Bc": "bc",
+        "BC": "bc",
+        "b_c": "bc",
+    }
+    return aliases.get(process_selection, process_selection)
+
+
+def _resolve_beauty_selection(data, process_selection):
+    """Resolve b, bc, bplus or bminus from hnl_production YAML."""
+    mode = _normalize_beauty_process_selection(process_selection)
+
+    if mode not in ("b", "bc", "bplus", "bminus"):
+        raise ValueError(f"Unsupported beauty selection: {mode!r}")
+
+    if mode not in data["selections"]:
+        raise KeyError(
+            f"HNL production YAML has no selections[{mode!r}]"
+        )
+
+    selection = data["selections"][mode]
+    particles = list(selection.get("particles", []))
+
+    if mode == "bplus" and particles != [521]:
+        raise ValueError(
+            "selections.bplus.particles must be [521]"
+        )
+    if mode == "bminus" and particles != [-521]:
+        raise ValueError(
+            "selections.bminus.particles must be [-521]"
+        )
+    if mode == "bc" and particles != [541]:
+        raise ValueError(
+            "selections.bc.particles must be [541]; PYTHIA supplies Bc- by charge conjugation"
+        )
+
+    return mode, selection
+
+
+def _canonical_particle_ids_for_pythia(particles):
+    """Map signed semantic IDs to PYTHIA particle-data IDs."""
+    result = []
+    for particle in particles:
+        if isinstance(particle, int):
+            result.append(abs(particle))
+        else:
+            result.append(particle)
+    return result
+
+
+def _channel_for_pythia(channel):
+    """Convert signed B-/Bc- YAML semantics to PYTHIA's positive parent entry."""
+    out = copy.deepcopy(channel)
+    parent_id = int(out["id"])
+
+    if parent_id >= 0:
+        return out
+
+    if parent_id not in (-521, -541):
+        raise ValueError(
+            "Negative-parent conversion is implemented only for B-/Bc-; "
+            f"got {parent_id}"
+        )
+
+    out["id"] = abs(parent_id)
+
+    if "idlepton" in out:
+        lepton = int(out["idlepton"])
+        if lepton != 13:
+            raise ValueError(
+                "Negative charged parent -> mu- HNL must use idlepton: 13 in YAML; "
+                f"got {lepton}"
+            )
+        out["idlepton"] = -13
+
+    if "idhadron" in out:
+        hadron = int(out["idhadron"])
+        if hadron != 0:
+            out["idhadron"] = -hadron
+
+    return out
+
+
+def _load_hnl_production_yaml(fairship_root):
+    """Load the HNL production YAML, optionally overridden by environment."""
+    override = os.environ.get("HNL_PRODUCTION_YAML")
+    if override:
+        datafile = os.path.expandvars(override)
+    else:
+        datafile = fairship_root + "/python/hnl_production_test.yaml"
+
+    if not os.path.exists(datafile):
+        raise FileNotFoundError(
+            f"HNL production YAML not found: {datafile}"
+        )
+
+    with open(datafile) as f:
+        data = yaml.load(f, Loader=yaml.FullLoader)
+
+    for key in ("particles", "selections", "channels"):
+        if key not in data:
+            raise ValueError(
+                f"{datafile} is missing required top-level key {key!r}"
+            )
+
+    print(f"HNL production YAML: {datafile}")
+    return datafile, data
+
+
 def configure(
     P8gen, mass, production_couplings, decay_couplings, process_selection, deepCopy: bool = False, debug: bool = True
 ) -> None:
@@ -187,10 +305,7 @@ def configure(
     # Load particle & decay data
     # ==========================
 
-    #datafile = fairship_root + "/python/hnl_production.yaml"
-    datafile = fairship_root + "/python/hnl_production_test.yaml"
-    with open(datafile) as f:
-        data = yaml.load(f, Loader=yaml.FullLoader)
+    datafile, data = _load_hnl_production_yaml(fairship_root)
     all_channels = data["channels"]
 
     # Inclusive
@@ -268,35 +383,135 @@ def configure(
         # List channels to confirm that Pythia has been properly set up
         P8gen.List(9900015)
 
-    # B/Bc decays only
-    # ================
+    # B/Bc/B+/B- decays only
+    # ======================
 
-    if process_selection in ["b", "bc"]:
-        selection = data["selections"][process_selection]
+    beauty_mode = _normalize_beauty_process_selection(process_selection)
+
+    if beauty_mode in ["b", "bc", "bplus", "bminus"]:
+        resolved_mode, selection = _resolve_beauty_selection(
+            data,
+            beauty_mode,
+        )
+
         for cmd in selection["parameters"]:
             P8gen.SetParameters(cmd)
+
         add_hnl(P8gen, mass, decay_couplings)
 
-        # Add particles
-        particles = selection["particles"]
-        add_particles(P8gen, particles, data)
+        # The YAML selection uses signed PHYSICS IDs, while PYTHIA particle
+        # definitions use the positive particle-data entry.
+        semantic_particles = list(selection["particles"])
+        pythia_particles = _canonical_particle_ids_for_pythia(
+            semantic_particles
+        )
+        add_particles(P8gen, pythia_particles, data)
 
-        # Find all decay channels
-        channels = [ch for ch in all_channels if ch["id"] in particles]
-        decays = [(ch["id"], [get_br(histograms, ch, mass, production_couplings)]) for ch in channels]
+        # Select by signed YAML ID first: this distinguishes B+ from B-.
+        semantic_channels = [
+            ch
+            for ch in all_channels
+            if int(ch["id"]) in semantic_particles
+        ]
 
-        # Compute scaling factor
-        max_total_br = compute_max_total_br(decays)
-        exit_if_zero_br(max_total_br, process_selection, mass)
-        print_scale_factor(1 / max_total_br)
+        if not semantic_channels:
+            raise ValueError(
+                f"No decay channels found for {resolved_mode!r} "
+                f"with particles={semantic_particles} in {datafile}"
+            )
 
-        # Add beauty decays
-        for ch in channels:
-            add_channel(P8gen, ch, histograms, mass, production_couplings, 1 / max_total_br)
+        # Convert B- semantics to valid +521 commands before using the
+        # existing FairShip helper functions.
+        pythia_channels = [
+            _channel_for_pythia(ch)
+            for ch in semantic_channels
+        ]
 
-        # Add dummy channels in place of SM processes
-        fill_missing_channels(P8gen, max_total_br, decays)
+        print(
+            f"Resolved beauty selection {resolved_mode!r}: "
+            f"semantic particles={semantic_particles}, "
+            f"PYTHIA particles={pythia_particles}"
+        )
+        for semantic, canonical in zip(
+            semantic_channels,
+            pythia_channels,
+        ):
+            print(
+                "  YAML channel "
+                f"id={semantic['id']}, "
+                f"idlepton={semantic.get('idlepton')} "
+                "-> PYTHIA channel "
+                f"id={canonical['id']}, "
+                f"idlepton={canonical.get('idlepton')}"
+            )
 
+        # Optional forced two-body channels are useful for detector-occupancy
+        # studies where the production kinematics are wanted but the physical
+        # B/Bc -> mu HNL branching ratio is applied later as an event weight.
+        forced_channels = [ch for ch in pythia_channels if "forced_br" in ch]
+
+        if forced_channels:
+            if len(forced_channels) != len(pythia_channels):
+                raise ValueError(
+                    "Do not mix forced_br and branching-ratio-table channels "
+                    f"inside selection {resolved_mode!r}"
+                )
+            for ch in forced_channels:
+                parent_id = abs(int(ch["id"]))
+                br = float(ch["forced_br"])
+                if not (0.0 < br <= 1.0):
+                    raise ValueError(f"forced_br must be in (0,1], got {br}")
+                if br != 1.0:
+                    raise ValueError(
+                        "Current forced two-body helper expects forced_br=1.0; "
+                        "apply physical branching-ratio weights in analysis."
+                    )
+                idlepton = int(ch["idlepton"])
+                P8gen.SetParameters(
+                    f"{parent_id}:oneChannel = 1 1.0 0 {idlepton} 9900015"
+                )
+                print(
+                    f"Forced occupancy channel: {parent_id} -> "
+                    f"{idlepton} + 9900015 (BR set to 1 for generation)"
+                )
+        else:
+            decays = [
+                (
+                    ch["id"],
+                    [
+                        get_br(
+                            histograms,
+                            ch,
+                            mass,
+                            production_couplings,
+                        )
+                    ],
+                )
+                for ch in pythia_channels
+            ]
+
+            max_total_br = compute_max_total_br(decays)
+            exit_if_zero_br(max_total_br, resolved_mode, mass)
+            print_scale_factor(1 / max_total_br)
+
+            for ch in pythia_channels:
+                add_channel(
+                    P8gen,
+                    ch,
+                    histograms,
+                    mass,
+                    production_couplings,
+                    1 / max_total_br,
+                )
+
+            fill_missing_channels(
+                P8gen,
+                max_total_br,
+                decays,
+            )
+
+        for pid in sorted(set(pythia_particles)):
+            P8gen.List(pid)
         P8gen.List(9900015)
 
     _exit_stack.close()

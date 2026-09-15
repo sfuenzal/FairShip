@@ -138,14 +138,24 @@ ap.add_argument(
 )
 ap.add_argument("-p", "--pot", default=4e13, help="number of protons on target per spill to normalize on")
 ap.add_argument("-S", "--nStart", type=int, help="first event of input file to start", dest="nStart", default=0)
+DEFAULT_CHARM_INPUT = (
+    ROOT.gSystem.Getenv("EOSSHIP")
+    + "/eos/experiment/ship/data/Charm/"
+    "Cascade-parp16-MSTP82-1-MSEL4-76Mpot_1.root"
+)
+
 ap.add_argument(
     "-I",
     "--InputFile",
     type=str,
     dest="charmInputFile",
-    default=ROOT.gSystem.Getenv("EOSSHIP")
-    + "/eos/experiment/ship/data/Charm/Cascade-parp16-MSTP82-1-MSEL4-76Mpot_1.root",
-    help="input file for charm/beauty decays",
+    default=None,
+    help=(
+        "External heavy-flavour input ROOT file. "
+        "For -C/--charm, the standard Charm/Cascade file is used if omitted. "
+        "For -B/--beauty, this option is REQUIRED and must point to a beauty "
+        "input file containing B hadrons."
+    ),
 )
 ap.add_argument("-o", "--output", type=str, help="output directory", dest="work_dir", default=None)
 ap.add_argument(
@@ -219,14 +229,29 @@ ap.add_argument(
     help="Whether or not to add sensitive plane after the target. False by default.",
 )
 
-# --- B+ -> mu+ HNL production study ----------------------------------------
-ap.add_argument(
+# --- charged B/Bc -> mu HNL production study -------------------------------
+hnl_signal_mode = ap.add_mutually_exclusive_group()
+hnl_signal_mode.add_argument(
+    "--hnl-parent",
+    choices=["b", "bc"],
+    default=None,
+    help=(
+        "Force the charged-parent decay and retain BOTH charge conjugates: "
+        "'b' = B+/- (|PDG|=521), 'bc' = Bc+/- (|PDG|=541). "
+        "Requires -B/--beauty and -P/--pythiaDecay. "
+        "Bc belongs to the beauty/MSEL=5 cascade."
+    ),
+)
+# Legacy charge-specific B switches are kept for backward compatibility.
+hnl_signal_mode.add_argument(
     "--bplus-hnl",
     action="store_true",
-    help=(
-        "Force the Pythia8 decay B+ -> mu+ HNL (and charge conjugate). "
-        "This mode is intended for -B/--beauty external heavy-flavour input and requires --pythiaDecay."
-    ),
+    help="Legacy: retain only B+ -> mu+ HNL.",
+)
+hnl_signal_mode.add_argument(
+    "--bminus-hnl",
+    action="store_true",
+    help="Legacy: retain only B- -> mu- HNL.",
 )
 ap.add_argument("--hnl-mass", type=float, default=1.0, help="HNL mass [GeV]")
 ap.add_argument("--hnl-pdg", type=int, default=9900015, help="HNL PDG code")
@@ -248,15 +273,50 @@ if args.kaon_pion_splits < 0:
     ap.error("--kaon-pion-splits must be >= 0")
 if args.multiple_kpi_splits and args.kaon_pion_splits == 0:
     ap.error("--multiple-kpi-splits requires --kaon-pion-splits > 0")
-if args.bplus_hnl:
+# Canonical HNL mode used throughout this script.
+if args.hnl_parent is not None:
+    hnl_mode = args.hnl_parent
+elif args.bplus_hnl:
+    hnl_mode = "bplus"
+elif args.bminus_hnl:
+    hnl_mode = "bminus"
+else:
+    hnl_mode = None
+
+PARENT_ABS_PDG = {
+    "b": 521,
+    "bc": 541,
+    "bplus": 521,
+    "bminus": 521,
+}
+PARENT_MASS_GEV = {
+    "b": 5.27934,
+    "bc": 6.27447,
+    "bplus": 5.27934,
+    "bminus": 5.27934,
+}
+
+if hnl_mode is not None:
     if not args.beauty:
-        ap.error("--bplus-hnl requires -B/--beauty so FixedTargetGenerator retains target-depth sampling")
+        ap.error(
+            f"HNL mode {hnl_mode!r} requires -B/--beauty. "
+            "Bc is part of the beauty/MSEL=5 cascade, not the charm/MSEL=4 cascade."
+        )
     if not args.pythiaDecay:
-        ap.error("--bplus-hnl requires -P/--pythiaDecay; EvtGen would otherwise own the B decay")
+        ap.error(
+            f"HNL mode {hnl_mode!r} requires -P/--pythiaDecay; "
+            "EvtGen would otherwise own the charged B/Bc decay."
+        )
     if args.hnl_mass <= 0.0:
         ap.error("--hnl-mass must be positive")
-    if args.hnl_mass >= 5.27934 - 0.105658:
-        ap.error("--hnl-mass is above the B+ -> mu+ HNL two-body threshold (~5.174 GeV)")
+
+    threshold = PARENT_MASS_GEV[hnl_mode] - 0.105658
+    if args.hnl_mass >= threshold:
+        ap.error(
+            f"--hnl-mass={args.hnl_mass:g} GeV is above the two-body threshold "
+            f"for {hnl_mode} -> mu HNL ({threshold:.3f} GeV)."
+        )
+
     if args.hnl_ctau_mm <= 0.0:
         ap.error("--hnl-ctau-mm must be positive")
 
@@ -276,13 +336,76 @@ else:
 if args.charm and args.beauty:
     logger.warning("charm and beauty decays are set! Beauty gets priority")
     args.charm = False
+
+# Heavy-flavour external-input validation.
+if args.charm and args.charmInputFile is None:
+    args.charmInputFile = DEFAULT_CHARM_INPUT
+
+if args.beauty and args.charmInputFile is None:
+    ap.error(
+        "-B/--beauty requires -I/--InputFile pointing to a BEAUTY input "
+        "ROOT file containing B hadrons. The historical default input is a "
+        "Charm/Cascade file and cannot produce B+/- -> mu+/- HNL."
+    )
+
 charmInputFile = args.charmInputFile
+
+if args.beauty:
+    normalized_input = str(charmInputFile).replace("\\", "/")
+    if "/Charm/" in normalized_input and "Cascade" in normalized_input:
+        ap.error(
+            "Beauty mode received a file that looks like the standard "
+            f"Charm/Cascade input: {charmInputFile}. "
+            "Use -I with your beauty/MSEL=5 production ROOT input instead."
+        )
+
+    print("=" * 72)
+    print("Beauty external input:")
+    print(f"  {charmInputFile}")
+
+    if hnl_mode is not None:
+        required_parent = PARENT_ABS_PDG[hnl_mode]
+        print(f"Required charged parent: |PDG|={required_parent}")
+
+        check_file = ROOT.TFile.Open(charmInputFile, "READ")
+        if not check_file or check_file.IsZombie():
+            ap.error(f"Could not open beauty input file: {charmInputFile}")
+
+        check_tree = check_file.Get("pythia6")
+        if check_tree:
+            n_parent = check_tree.Draw(
+                "id", f"abs(id)=={required_parent}", "goff"
+            )
+            if n_parent <= 0:
+                check_file.Close()
+                ap.error(
+                    f"Beauty input contains no |PDG|={required_parent} entries. "
+                    "Generate/use an MSEL=5 cascade containing the requested parent."
+                )
+            print(f"Found {n_parent} input rows with |PDG|={required_parent}")
+        else:
+            print(
+                "WARNING: no 'pythia6' tree found; parent-species presence "
+                "could not be checked here."
+            )
+        check_file.Close()
+
+    print("=" * 72)
 
 if args.work_dir is None:
     if args.charm:
         args.work_dir = get_work_dir(args.runnr, "charm")
     if args.beauty:
-        args.work_dir = get_work_dir(args.runnr, "beauty")
+        beauty_tag = "beauty"
+        if hnl_mode == "b":
+            beauty_tag = "beauty_BpmHNL"
+        elif hnl_mode == "bc":
+            beauty_tag = "beauty_BcpmHNL"
+        elif hnl_mode == "bplus":
+            beauty_tag = "beauty_BplusHNL"
+        elif hnl_mode == "bminus":
+            beauty_tag = "beauty_BminusHNL"
+        args.work_dir = get_work_dir(args.runnr, beauty_tag)
     else:
         args.work_dir = get_work_dir(args.runnr)
 
@@ -328,6 +451,16 @@ ship_geo = geometry_config.create_config(**ship_geo_kwargs)
 txt = "pythia8_Geant4_"
 if withEvtGen:
     txt = "pythia8_evtgen_Geant4_"
+
+if hnl_mode == "b":
+    txt += "BpmHNL_"
+elif hnl_mode == "bc":
+    txt += "BcpmHNL_"
+elif hnl_mode == "bplus":
+    txt += "BplusHNL_"
+elif hnl_mode == "bminus":
+    txt += "BminusHNL_"
+
 outFile = f"{outputDir}/{txt}{args.runnr}_{args.ecut}.root"
 parFile = f"{outputDir}/ship.params.{txt}{args.runnr}_{args.ecut}.root"
 
@@ -507,30 +640,61 @@ ROOT.SetOwnership(primGen, False)  # C++ FairRunSim takes ownership
 # -----Initialize simulation run------------------------------------
 run.Init()
 
-# Configure B+ -> mu+ HNL after FixedTargetGenerator has created its Pythia8
-# object. With -B, ProcessLevel is off and an external beauty hadron is appended
-# event-by-event, so decay-table changes here act on the subsequent decays while
-# preserving the target-depth sampling performed by FixedTargetGenerator.
-if args.bplus_hnl:
+# Configure charged B/Bc -> mu HNL after FixedTargetGenerator has created
+# its Pythia8 object. PYTHIA configures particle/antiparticle decays through
+# the positive particle-data entry; the negative parent is charge conjugated.
+if hnl_mode is not None:
     p8 = P8gen.GetPythia()
     hnl = args.hnl_pdg
-    p8.readString(
-        f"{hnl}:new = N2 N2 2 0 0 {args.hnl_mass:.12g} 0.0 0.0 0.0 {args.hnl_ctau_mm:.12g} 0 1 0 1 0"
-    )
-    p8.readString(f"{hnl}:isResonance = false")
-    p8.readString(f"{hnl}:mayDecay = on")
-    # Technical invisible decay: keeps HNL in MCTrack but prevents transport of
-    # an unknown BSM final-state particle through Geant4 in this production study.
-    p8.readString(f"{hnl}:oneChannel = 1 1.0 0 14 -14")
-    # PDG(mu+) = -13. Pythia applies charge conjugation to B-.
-    p8.readString(f"521:oneChannel = 1 1.0 0 -13 {hnl}")
+    parent_abs = PARENT_ABS_PDG[hnl_mode]
+
+    commands = [
+        (
+            f"{hnl}:new = N2 N2 2 0 0 "
+            f"{args.hnl_mass:.12g} 0.0 0.0 0.0 "
+            f"{args.hnl_ctau_mm:.12g} 0 1 0 1 0"
+        ),
+        f"{hnl}:isResonance = false",
+        f"{hnl}:mayDecay = on",
+        f"{hnl}:oneChannel = 1 1.0 0 14 -14",
+        # positive charged parent -> mu+ (-13) + HNL;
+        # the negative charged parent is automatic charge conjugation.
+        f"{parent_abs}:oneChannel = 1 1.0 0 -13 {hnl}",
+    ]
+
+    for command in commands:
+        ok = p8.readString(command)
+        if not ok:
+            raise RuntimeError(f"PYTHIA rejected command: {command}")
 
     pdg = ROOT.TDatabasePDG.Instance()
     if not pdg.GetParticle(hnl):
-        pdg.AddParticle("N2", "N2", args.hnl_mass, True, 0.0, 0.0, "HNL", hnl)
+        pdg.AddParticle(
+            "N2", "N2", args.hnl_mass,
+            True, 0.0, 0.0, "HNL", hnl
+        )
 
-    print(f"Configured forced B+ -> mu+ HNL: m_HNL={args.hnl_mass:g} GeV, PDG={hnl}")
-    p8.particleData.list(521)
+    if hnl_mode == "b":
+        selected_decay = "B+/- -> mu+/- HNL (both charges)"
+    elif hnl_mode == "bc":
+        selected_decay = "Bc+/- -> mu+/- HNL (both charges)"
+    elif hnl_mode == "bplus":
+        selected_decay = "B+ -> mu+ HNL"
+    else:
+        selected_decay = "B- -> mu- HNL"
+
+    print("=" * 72)
+    print(f"Requested charged-parent signal: {selected_decay}")
+    print(
+        f"PYTHIA configured through +{parent_abs}; "
+        "the negative parent uses the automatic charge-conjugate decay."
+    )
+    print(
+        f"HNL mass={args.hnl_mass:g} GeV, "
+        f"PDG={hnl}, technical ctau={args.hnl_ctau_mm:g} mm"
+    )
+    print("=" * 72)
+    p8.particleData.list(parent_abs)
     p8.particleData.list(hnl)
 
 gMC = ROOT.TVirtualMC.GetMC()
@@ -618,36 +782,102 @@ if nt:
 t = fin["cbmsim"]
 fout = ROOT.TFile(tmpFile, "recreate")
 sTree = t.CloneTree(0)
+
 nEvents = 0
+nHNLRaw = 0
+nSignalPlusRaw = 0
+nSignalMinusRaw = 0
+
+
+def event_has_signal_chain(tracks, mother_pdg, muon_pdg, hnl_pdg):
+    """Require parent -> mu + HNL with both daughters from the same direct mother."""
+    hnl_mothers = set()
+
+    for i_tr in range(len(tracks)):
+        tr = tracks[i_tr]
+        if tr.GetPdgCode() != hnl_pdg:
+            continue
+        mother_id = tr.GetMotherId()
+        if mother_id >= 0:
+            hnl_mothers.add(mother_id)
+
+    for i_tr in range(len(tracks)):
+        mu = tracks[i_tr]
+        if mu.GetPdgCode() != muon_pdg:
+            continue
+
+        mother_id = mu.GetMotherId()
+        if mother_id < 0 or mother_id >= len(tracks):
+            continue
+        if tracks[mother_id].GetPdgCode() != mother_pdg:
+            continue
+        if mother_id in hnl_mothers:
+            return True
+
+    return False
+
+
 for n in range(t.GetEntries()):
     rc = t.GetEvent(n)
-    keep_hnl_event = False
-    if args.bplus_hnl and hasattr(t, "MCTrack"):
+
+    has_positive_signal = False
+    has_negative_signal = False
+
+    if hasattr(t, "MCTrack"):
         tracks = t.MCTrack
+
         for i_tr in range(len(tracks)):
-            tr = tracks[i_tr]
-            if tr.GetPdgCode() != -13:
-                continue
-            mother_id = tr.GetMotherId()
-            if mother_id < 0 or mother_id >= len(tracks):
-                continue
-            if tracks[mother_id].GetPdgCode() != 521:
-                continue
-            for j_tr in range(len(tracks)):
-                sib = tracks[j_tr]
-                if sib.GetPdgCode() == args.hnl_pdg and sib.GetMotherId() == mother_id:
-                    keep_hnl_event = True
-                    break
-            if keep_hnl_event:
-                break
-    if (
-        keep_hnl_event
-        or (len(t.PlaneHAPoint) > 0)
-        or (args.AddCylindricalSensPlane and len(t.PlaneTPoint) > 0)
-        or (args.AddPostTargetSensPlane and len(t.PlanePostTPoint) > 0)
-    ):
+            if tracks[i_tr].GetPdgCode() == args.hnl_pdg:
+                nHNLRaw += 1
+
+        if hnl_mode is not None:
+            parent_abs = PARENT_ABS_PDG[hnl_mode]
+            has_positive_signal = event_has_signal_chain(
+                tracks, parent_abs, -13, args.hnl_pdg
+            )
+            has_negative_signal = event_has_signal_chain(
+                tracks, -parent_abs, 13, args.hnl_pdg
+            )
+
+            if has_positive_signal:
+                nSignalPlusRaw += 1
+            if has_negative_signal:
+                nSignalMinusRaw += 1
+
+    if hnl_mode == "bplus":
+        keep_event = has_positive_signal
+    elif hnl_mode == "bminus":
+        keep_event = has_negative_signal
+    elif hnl_mode in ("b", "bc"):
+        keep_event = has_positive_signal or has_negative_signal
+    else:
+        keep_event = (
+            (len(t.PlaneHAPoint) > 0)
+            or (
+                args.AddCylindricalSensPlane
+                and len(t.PlaneTPoint) > 0
+            )
+            or (
+                args.AddPostTargetSensPlane
+                and len(t.PlanePostTPoint) > 0
+            )
+        )
+
+    if keep_event:
         rc = sTree.Fill()
         nEvents += 1
+
+if hnl_mode is not None:
+    parent_abs = PARENT_ABS_PDG[hnl_mode]
+    parent_label = "B" if parent_abs == 521 else "Bc"
+    print("=" * 72)
+    print("RAW cbmsim diagnostic before signal filtering")
+    print(f"  HNL MCTracks (PDG {args.hnl_pdg}) : {nHNLRaw}")
+    print(f"  {parent_label}+ -> mu+ HNL events             : {nSignalPlusRaw}")
+    print(f"  {parent_label}- -> mu- HNL events             : {nSignalMinusRaw}")
+    print(f"  Retained signal events              : {nEvents}")
+    print("=" * 72)
+
 fout.cd()
 for k in fin.GetListOfKeys():
     x = fin.Get(k.GetName())
@@ -672,26 +902,59 @@ if rc1 == 0 and rc2 == 0:
     fsr = vars(args)
     with ROOT.TFile.Open(outFile, "UPDATE") as _of:
         _of.WriteObject(ROOT.TString(json.dumps(fsr)), "FileSummary")
-        if args.bplus_hnl:
+        if hnl_mode is not None:
+            parent_abs = PARENT_ABS_PDG[hnl_mode]
+            if hnl_mode == "b":
+                process_name = "B+/- -> mu+/- HNL"
+            elif hnl_mode == "bc":
+                process_name = "Bc+/- -> mu+/- HNL"
+            elif hnl_mode == "bplus":
+                process_name = "B+ -> mu+ HNL"
+            else:
+                process_name = "B- -> mu- HNL"
+
             hnl_meta = {
-                "process": "B+ -> mu+ HNL",
+                "process": process_name,
+                "hnl_mode": hnl_mode,
+                "parent_abs_pdg": parent_abs,
+                "both_charges": hnl_mode in ("b", "bc"),
                 "hnl_pdg": args.hnl_pdg,
                 "hnl_mass_GeV": args.hnl_mass,
                 "hnl_ctau_mm": args.hnl_ctau_mm,
                 "beam_momentum_GeV": 400.0,
                 "target_composition": args.target_composition,
                 "target_z0_cm": float(ship_geo.target.z0 / u.cm),
-                "target_z_end_cm": float((ship_geo.target.z0 + ship_geo.target.length) / u.cm),
-                "target_transverse_size_cm": float(ship_geo.target.xy / u.cm),
-                "note": "HNL uses a technical Pythia decay to nu_mu anti-nu_mu for production-only Geant4 compatibility.",
+                "target_z_end_cm": float(
+                    (ship_geo.target.z0 + ship_geo.target.length) / u.cm
+                ),
+                "target_transverse_size_cm": float(
+                    ship_geo.target.xy / u.cm
+                ),
+                "note": (
+                    f"PYTHIA is configured through +{parent_abs}; "
+                    "the negative parent is the automatic charge-conjugate decay. "
+                    "Modes 'b' and 'bc' retain both parent charges."
+                ),
             }
-            _of.WriteObject(ROOT.TString(json.dumps(hnl_meta)), "HNLFixedTargetConfig")
+            _of.WriteObject(
+                ROOT.TString(json.dumps(hnl_meta)),
+                "HNLFixedTargetConfig",
+            )
 else:
     print("WARNING: tempFile mv or rm not successful. No attempt at FileSummary writing")
 
 fin.SetWritable(False)  # bpyass flush error
 
-print(f"Number of events produced with activity after hadron absorber: {nEvents}")
+if hnl_mode == "b":
+    print(f"Number of retained B+/- -> mu+/- HNL events: {nEvents}")
+elif hnl_mode == "bc":
+    print(f"Number of retained Bc+/- -> mu+/- HNL events: {nEvents}")
+elif hnl_mode == "bplus":
+    print(f"Number of retained B+ -> mu+ HNL events: {nEvents}")
+elif hnl_mode == "bminus":
+    print(f"Number of retained B- -> mu- HNL events: {nEvents}")
+else:
+    print(f"Number of events produced with activity after hadron absorber: {nEvents}")
 
 if checkOverlap:
     sGeo = ROOT.gGeoManager
