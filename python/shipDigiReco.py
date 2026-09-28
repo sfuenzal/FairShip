@@ -149,22 +149,38 @@ class ShipDigiReco:
     def digitize(self) -> None:
         self.sTree.t0 = self.random.Rndm() * 1 * u.microsecond
         self.header.SetEventTime(self.sTree.t0)
-        self.header.SetRunId(self.sTree.MCEventHeader.GetRunID())
-        self.header.SetMCEntryNumber(self.sTree.MCEventHeader.GetEventID())  # counts from 1
+
+        # Normal FairShip MC files contain MCEventHeader.
+        # make_time_window.py output currently does not.
+        if self.sTree.GetBranch("MCEventHeader"):
+            self.header.SetRunId(self.sTree.MCEventHeader.GetRunID())
+            self.header.SetMCEntryNumber(self.sTree.MCEventHeader.GetEventID())
+        else:
+            # For time-window overlay files, identify the window by its tree entry.
+            self.header.SetRunId(0)
+            self.header.SetMCEntryNumber(int(self.sTree.GetReadEntry()))
+
         if hasattr(self, "digiSBT"):
             self.digiSBT.process()
+
         if hasattr(self, "strawtubes"):
             self.strawtubes.process()
+
         if hasattr(self, "timeDetector"):
             self.timeDetector.process()
+
         if hasattr(self, "upstreamTaggerDetector"):
             self.upstreamTaggerDetector.process()
+
         if hasattr(self, "digiMTC"):
             self.digiMTC.process()
+
         if hasattr(self, "digiSiliconTarget"):
             self.digiSiliconTarget.process()
+
         if self.sTree.GetBranch("splitcalPoint"):
             self.splitcalDetector.process()
+
         if self.validation:
             self.validation_stats["events_digitized"] += 1
 

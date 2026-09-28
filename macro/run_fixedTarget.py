@@ -511,10 +511,17 @@ if not args.reproducible:
     print(f"Real time {rtime} s, CPU time {ctime} s")
 # ---post processing--- remove empty events --- save histograms
 tmpFile = outFile + "tmp"
-if ROOT.gROOT.GetListOfFiles().GetEntries() > 0:
-    fin = ROOT.gROOT.GetListOfFiles()[0]
-else:
-    fin = ROOT.TFile.Open(outFile)
+fin = ROOT.TFile.Open(outFile, "READ")
+
+if not fin or fin.IsZombie():
+    raise RuntimeError(f"Could not open simulation output file: {outFile}")
+
+if not fin.Get("cbmsim"):
+    print(f"ERROR: cbmsim not found in {outFile}")
+    print("Available keys:")
+    for key in fin.GetListOfKeys():
+        print("  ", key.GetName(), key.GetClassName())
+    raise RuntimeError("Simulation output has no cbmsim tree")
 fHeader = fin.Get("FileHeader")
 if fHeader:
     fHeader.SetRunId(args.runnr)

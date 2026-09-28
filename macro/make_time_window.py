@@ -210,6 +210,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("input_file", help="Input ROOT file")
     parser.add_argument(
+        "--lambda-override",
+        type=float,
+        default=None,
+        help="Override Poisson mean interactions per time window.",
+    )
+    parser.add_argument(
         "-n", "--n-windows", type=int, default=100, help="Number of time windows to generate (default: 100)"
     )
     parser.add_argument(
@@ -303,7 +309,14 @@ def main():
     # Compute Poisson mean (lambda) for interactions per time window.
     # sum_weights = total interactions per spill (weights scale to one spill).
     # Fraction of spill in one time window gives the per-window expectation:
-    lam = sum_weights * (TIME_WINDOW / SPILL_DURATION)
+    lam_from_weights = sum_weights * (TIME_WINDOW / SPILL_DURATION)
+
+    if args.lambda_override is not None:
+        lam = args.lambda_override
+        log.info(f"Lambda from summed weights: {lam_from_weights:.4f}")
+        log.info(f"Using lambda override: {lam:.4f}")
+    else:
+        lam = lam_from_weights
 
     log.info(f"Expected interactions per window (lambda): {lam:.4f}")
 
