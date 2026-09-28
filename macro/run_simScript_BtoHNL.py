@@ -644,8 +644,18 @@ if options.pythia8:
         P8gen.SetParameters("ProcessLevel:all = off")
         if inputFile:
             useInputFile(inputFile)
-            # read from external file
-            P8gen.UseExternalFile(inputFile, options.firstEvent)
+
+            if isinstance(inputFile, (list, tuple)):
+                if len(inputFile) != 1:
+                    raise RuntimeError(
+                        f"Expected exactly one external HNL input file, got {len(inputFile)}"
+                    )
+                external_file = inputFile[0]
+            else:
+                external_file = inputFile
+
+            print(f"HNL external input file: {external_file}")
+            P8gen.UseExternalFile(str(external_file), options.firstEvent)
     if options.DarkPhoton:
         P8gen = ROOT.DPPythia8Generator()
         if inclusive == "qcd":
