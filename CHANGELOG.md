@@ -14,9 +14,16 @@ it in future.
 
 ### Added
 
+* Add `--pythia8-tune` (`default`, `FTFT`) to `run_fixedTarget.py` and `FixedTargetGenerator::SetPythiaTune` to select the FTFT Pythia8 tune for open charm and beauty production in fixed-target collisions (arXiv:2608.29076) in the Pythia8 primary interaction. The Pythia8 default (Monash 2013) remains the default. Charm and beauty read from cascade input files are unaffected. `SetPythiaTune` takes the same tune names as the command line, with `default` and the empty string both selecting the Pythia8 default. `run_fixedTarget.py` rejects the flag up front when combined with `--charm`, `--beauty` or `--G4only`, where the tune would have no effect. A non-default tune also tags the work directory (e.g. `<host>_run_fixedTarget_1_FTFT`), so runs that differ only by tune no longer overwrite each other.
+
 ### Changed
 
+* Update default He balloon liner to be made with polyester like Mylar, named mylar_linerHe with density/thickness matching material #5
+
 ### Fixed
+
+* Charm runs of `run_fixedTarget.py` no longer drop the `charm` work-directory tag: a missing `elif` meant the tag was assigned and then immediately overwritten, so charm output landed in the same untagged directory as a min-bias run of the same run number.
+* Update location of post-target sensitive plane in `run_fixedTarget` to use nominal target length, in order to avoid overlaps
 
 ### Removed
 
