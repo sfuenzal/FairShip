@@ -79,6 +79,14 @@ ap.add_argument(
     default=False,
     help="Whether or not to use Pythia8 for decays (--no-PythiaDecay or --PythiaDecay). Default set to False.",
 )
+ap.add_argument(
+    "--pythia8-tune",
+    dest="pythia8_tune",
+    default="default",
+    choices=["default", "FTFT"],
+    help="Pythia8 tune for the primary interaction: default (Monash 2013) or FTFT "
+    "(fixed-target open charm and beauty tune, arXiv:2608.29076).",
+)
 ap.add_argument("-t", "--tau-only", action=argparse.BooleanOptionalAction, dest="tauOnly", default=False)
 ap.add_argument("-J", "--Jpsi-mainly", action=argparse.BooleanOptionalAction, dest="JpsiMainly", default=False)
 ap.add_argument("-b", "--boostDiMuon", type=float, default=1.0, help="boost Di-muon branching ratios")
@@ -227,6 +235,8 @@ if args.kaon_pion_splits < 0:
     ap.error("--kaon-pion-splits must be >= 0")
 if args.multiple_kpi_splits and args.kaon_pion_splits == 0:
     ap.error("--multiple-kpi-splits requires --kaon-pion-splits > 0")
+if args.pythia8_tune != "default" and (args.charm or args.beauty or args.G4only):
+    ap.error("--pythia8-tune only affects the Pythia8 primary interaction, which --charm/--beauty/--G4only do not run")
 
 
 if args.G4only:
@@ -248,11 +258,14 @@ charmInputFile = args.charmInputFile
 
 if args.work_dir is None:
     if args.charm:
-        args.work_dir = get_work_dir(args.runnr, "charm")
-    if args.beauty:
-        args.work_dir = get_work_dir(args.runnr, "beauty")
+        tag = "charm"
+    elif args.beauty:
+        tag = "beauty"
+    elif args.pythia8_tune != "default":
+        tag = args.pythia8_tune
     else:
-        args.work_dir = get_work_dir(args.runnr)
+        tag = None
+    args.work_dir = get_work_dir(args.runnr, tag)
 
 logger.debug("work_dir: %s" % args.work_dir)
 logger.debug("command line arguments: %s", args)
@@ -356,9 +369,8 @@ if args.AddPostTargetSensPlane:
     sensPlanePostT.SetVetoPointName("PlanePostT")
     # by default, if the z-position is not set, the positioning is behind the hadron abosorber and the tracks are stopped when they hit the sens plane
     # if the z-position is set and has a reasonable value (below 1E8), then the tracks are not stopped and continue to the last plane after the hadron absorber
-    sensPlanePostT.SetZposition(
-        ship_geo.target.length + 7.6 * u.cm + 300 * u.mm
-    )  # target length + vessel shift + shielding length
+    sensPlanePostT.SetZposition(158.64 * u.cm + 300 * u.mm + 6.2 * u.cm)
+    # NOMINAL target length + vessel shift + shielding length
     sensPlanePostT.SetUseCaveCoordinates()  # position set from the cave to avoid extrusions since the plane is larger than the target vacuum box
 
     if args.storeOnlyMuons:
@@ -443,6 +455,7 @@ P8gen.SetDebug(args.debug)
 P8gen.SetHeartBeat(100000)
 if args.G4only:
     P8gen.SetG4only()
+P8gen.SetPythiaTune(args.pythia8_tune)
 if args.JpsiMainly:
     P8gen.SetJpsiMainly()
 if args.tauOnly:
@@ -535,6 +548,8 @@ else:
     info = f"POT = {args.nev}"
 
 conditions = " with ecut=" + str(args.ecut)
+if args.pythia8_tune != "default":
+    conditions += " " + args.pythia8_tune
 if args.JpsiMainly:
     conditions += " J"
 if args.tauOnly:
