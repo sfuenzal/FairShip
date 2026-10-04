@@ -6,8 +6,10 @@
 
 #include <TGeoManager.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -25,6 +27,36 @@
 #include "TMCProcess.h"
 #include "TMath.h"
 #include "TROOT.h"
+
+namespace {
+// B(D_s+ -> tau+ nu_tau), world average (PDG 2024)
+constexpr double kDsToTauNuBR = 0.0536;
+
+// Set the D_s -> tau nu branching fraction and rescale the other D_s decay
+// channels so that the branching fractions still add up to one.
+void SetDsToTauNuBR(Pythia8::Pythia* pythia, double br) {
+  auto entry = pythia->particleData.particleDataEntryPtr(431);
+  if (!entry) {
+    return;
+  }
+  int iTauNu = -1;
+  for (int i = 0; i < entry->sizeChannels(); ++i) {
+    const auto& ch = entry->channel(i);
+    if (ch.multiplicity() == 2 && std::abs(ch.product(0)) == 15 &&
+        std::abs(ch.product(1)) == 16) {
+      iTauNu = i;
+    }
+  }
+  if (iTauNu < 0) {
+    return;
+  }
+  const double scale = (1. - br) / (1. - entry->channel(iTauNu).bRatio());
+  for (int i = 0; i < entry->sizeChannels(); ++i) {
+    auto& ch = entry->channel(i);
+    ch.bRatio(i == iTauNu ? br : ch.bRatio() * scale);
+  }
+}
+}  // namespace
 
 using ShipUnit::cm;
 using ShipUnit::mm;
@@ -143,6 +175,7 @@ Bool_t FixedTargetGenerator::InitForCharmOrBeauty(const TString& fInName,
   // convert pot to weight corresponding to one spill of 5e13 pot
   // get histogram with number of pot to normalise
   // pot are counted double, i.e. for each signal, i.e. pot/2.
+  // not TH1F: rootUtils, used by makeCascade.py, books a TH1D
   auto* potHist = dynamic_cast<TH1*>(fin->Get("2"));
   if (!potHist) {
     LOG(error) << "FixedTargetGenerator: histogram '2' not found in input file";
@@ -154,7 +187,9 @@ Bool_t FixedTargetGenerator::InitForCharmOrBeauty(const TString& fInName,
   }
   Int_t nrcpot =
       potHist->GetBinContent(1) / 2.;  // number of primary interactions
-  wspill = nrpotspill * chicc / nrcpot * nEvents / nev;
+  // every event reads two entries, the two heavy-flavour hadrons of a pair,
+  // so the file holds nEvents / 2 events
+  wspill = nrpotspill * chicc / nrcpot * (nEvents / 2.) / nev;
   LOG(info) << "Input file: " << fInName.Data() << " with " << nEvents
             << " entries, corresponding to nr-pot=" << (nrcpot / chicc);
   LOG(info) << "weight " << wspill << " corresponding to " << nrpotspill
@@ -277,6 +312,9 @@ Bool_t FixedTargetGenerator::Init() {
           "431:addChannel = 1   0.0640000    0      -15       16");
     }
 
+    // D_s -> tau nu_tau: Pythia8 has 6.4%, set the world average and rescale
+    // the other channels, since it sets the tau neutrino yield
+    SetDsToTauNuBR(fPythia, kDsToTauNuBR);
     // find all long lived particles in pythia
     Int_t n = 1;
     while (n != 0) {
@@ -417,31 +455,44 @@ Bool_t FixedTargetGenerator::ReadEvent(FairPrimaryGenerator* cpg) {
     return kTRUE;
   }
 
+  // Cascade input: read the first hadron of the pair before placing the event,
+  // since its cascade depth sets how far into the target it is produced.
+  Int_t nInteractions = 1;
+  if (Option != "Primary") {
+    if (nEntry == nEvents) {
+      LOG(info) << "Rewind input file: " << nEntry;
+      nEntry = 0;
+    }
+    nTree->GetEvent(nEntry);
+    nEntry += 1;
+    if (nTree->GetBranch("k")) {
+      nInteractions = std::max(1, static_cast<Int_t>(TMath::Nint(ck)));
+    }
+  }
+
   Double_t zinter = 0;
   Double_t ZoverA = 1.;
   if (!targetName.IsNull()) {
-    // calculate primary proton interaction point:
-    // loop over trajectory between start and end to pick an interaction point,
-    // copied from GenieGenerator and adapted to hadrons
-    Double_t prob2int = -1.;
-    Double_t rndm = 0.;
+    // Interaction point, sampled along the beam line from the interaction
+    // probability in the material (copied from GenieGenerator and adapted to
+    // hadrons). A hadron from cascade depth k is produced in the k-th
+    // interaction: each further interaction point is sampled from the material
+    // after the previous one.
+    constexpr int kMaxTries = 100000;
     Double_t sigma;
     Double_t zinterStart = start[2];
-    if (Option == "charm" || Option == "beauty") {
-      // simulate more downstream interaction points for interactions down in
-      // the cascade
-      if (!(nTree->GetBranch("k"))) {
-        ck = 1;
-      }
-    } else {
-      ck = 1;
-    }
-    while (ck > 0.5) {
-      while (prob2int < rndm) {
+    for (Int_t iInter = 0; iInter < nInteractions; ++iInter) {
+      const Double_t from[3] = {start[0], start[1], zinterStart};
+      Double_t prob2int = -1.;
+      Double_t rndm = 0.;
+      Double_t zTry = zinterStart;
+      int tries = 0;
+      while (prob2int < rndm && tries < kMaxTries) {
+        ++tries;
         // place x,y,z uniform along path
-        zinter = gRandom->Uniform(zinterStart, end[2]);
-        Double_t point[3] = {xOff, yOff, zinter};
-        bparam = shipgen::MeanMaterialBudget(start, point, mparam);
+        zTry = gRandom->Uniform(zinterStart, end[2]);
+        Double_t point[3] = {xOff, yOff, zTry};
+        bparam = shipgen::MeanMaterialBudget(from, point, mparam);
         Double_t interLength = mparam[8];
         TGeoNode* node = gGeoManager->FindNode(point[0], point[1], point[2]);
         TGeoMaterial* mat = nullptr;
@@ -456,8 +507,12 @@ Bool_t FixedTargetGenerator::ReadEvent(FairPrimaryGenerator* cpg) {
         }
         rndm = gRandom->Uniform(0., 1.);
       }
+      if (prob2int < rndm) {
+        // no material left downstream: keep the previous interaction point
+        break;
+      }
+      zinter = zTry;
       zinterStart = zinter;
-      ck -= 1;
     }
     zinter = zinter * cm;
   }
@@ -494,17 +549,18 @@ Bool_t FixedTargetGenerator::ReadEvent(FairPrimaryGenerator* cpg) {
       fPythia = fPythiaN;
     }
   } else {
-    if (nEntry == nEvents) {
-      LOG(info) << "Rewind input file: " << nEntry;
-      nEntry = 0;
-    }
-    nTree->GetEvent(nEntry);
-    nEntry += 1;
+    // the first hadron of the pair was read above
     IncrementCounter("charm_input_pairs");
+    // primary: produced by the beam proton, cascade depth 1. Files without
+    // the depth branch tag the beam proton by its zero transverse momentum,
+    // which misses beam protons that scattered elastically before.
+    const Bool_t isPrimary =
+        nTree->GetBranch("k")
+            ? ck < 1.5
+            : n_mid == 2212 && (n_mpx * n_mpx + n_mpy * n_mpy) < 1E-5;
     // sanity check, count number of p.o.t. on input file.
-    Double_t pt = TMath::Sqrt((n_mpx * n_mpx) + (n_mpy * n_mpy));
     // every event appears twice, i.e.
-    if (pt < 1.e-5 && n_mid == 2212) {
+    if (isPrimary) {
       pot += 0.5;
       ntotprim += 1;
     }
@@ -517,9 +573,9 @@ Bool_t FixedTargetGenerator::ReadEvent(FairPrimaryGenerator* cpg) {
     fPythiaP->event.append(static_cast<int>(n_id), 1, 0, 0, n_px, n_py, n_pz,
                            n_E, n_M, 0., 9.);
     TMCProcess procID = kPTransportation;
-    if (n_mid == 2212 && (n_mpx * n_mpx + n_mpy * n_mpy) < 1E-5) {
+    if (isPrimary) {
       procID = kPPrimary;
-    }  // probably primary and not from cascade
+    }
     cpg->AddTrack(static_cast<int>(n_mid), n_mpx, n_mpy, n_mpz,
                   (xOff + dx) * cm, (yOff + dy) * cm, zinter * cm, -1, kFALSE,
                   n_mE, 0., wspill, procID);

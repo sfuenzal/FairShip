@@ -71,6 +71,9 @@ parser.add_argument(
     help="Use TEvtGenDecayer for J/psi and other quarkonium decays",
     action="store_true",
 )
+parser.add_argument(
+    "--targetOffset", dest="targetOffset", help="z offset for the target coordinate", default=0.0, type=float
+)
 subparsers = parser.add_subparsers(dest="command", help="Which mode to run")
 # === PG subcommand ===
 pg_parser = subparsers.add_parser("PG", help="Use Particle Gun")
@@ -357,7 +360,7 @@ parser.add_argument("--check-overlaps", help="Perform geometry overlap checking"
 parser.add_argument(
     "--field_map",
     default=None,
-    help="Specify spectrometer field map as files/<name>.root. Default set in geometry_config.py: files/2025_02_12_SHiP_SpectrometerField_ECN3_MgB2.root",
+    help="Specify spectrometer field map as files/<name>.root. Default set in geometry_config.py: files/2026_09_28_SHiP_SpectrometerField_ECN3_MgB2.root",
 )
 parser.add_argument(
     "--z-offset", dest="z_offset", help="z-offset for the FixedTargetGenerator [mm]", default=-84.0, type=float
@@ -816,7 +819,7 @@ if options.nuradio:
     # ROOT.gMC.SetUserDecay(i) # Force the decay to be done w/external decayer
 if options.ttree:
     useInputFile(inputFile)
-    primGen.SetTarget(0.0, 0.0)
+    primGen.SetTarget(0.0 + options.targetOffset * u.m, 0.0)
     generator = ROOT.SHiP.TTreeGenerator()
     generator.SetTreeName("converted_ntuple")
     if not generator.Init(inputFile, options.firstEvent):
